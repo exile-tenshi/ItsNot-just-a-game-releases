@@ -1,36 +1,41 @@
 #!/usr/bin/env bash
-# Start GLM-5.1 UI — single process, runs entirely on this PC
+# Start GLM-5.1 UI — optimized coding agent
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 cd "$ROOT"
 
-echo "==> GLM-5.1 UI — local mode (no cloud required)"
+echo "==> GLM-5.1 UI — trained coding agent"
 
-# Python deps
 if ! python3 -c "import fastapi" 2>/dev/null; then
   echo "==> Installing Python dependencies..."
   pip install -r backend/requirements.txt -q
 fi
 
-# Build frontend if needed
 if [ ! -d "frontend/dist" ] || [ "frontend/dist/index.html" -ot "frontend/package.json" ]; then
   if command -v npm >/dev/null 2>&1; then
     echo "==> Building frontend..."
     (cd frontend && npm install --silent && npm run build)
-  else
-    echo "WARN: npm not found — API only at :8000 (install Node.js to serve UI)"
   fi
 fi
 
-# Check Ollama (optional warning)
-if ! curl -sf http://127.0.0.1:11434/api/tags >/dev/null 2>&1; then
+# Recommend best local model for agent quality
+RECOMMENDED="qwen2.5-coder:14b"
+if curl -sf http://127.0.0.1:11434/api/tags >/dev/null 2>&1; then
+  if ! curl -sf http://127.0.0.1:11434/api/tags | grep -q "qwen2.5-coder"; then
+    echo ""
+    echo "TIP: For best agent quality, pull the trained-recommended model:"
+    echo "  ollama pull $RECOMMENDED"
+    echo "  (or: ollama pull qwen2.5:14b)"
+    echo ""
+  fi
+else
   echo ""
-  echo "NOTE: Ollama is not running on this PC yet."
-  echo "  Install from https://ollama.com"
-  echo "  Then run:  ollama pull llama3.1:8b"
+  echo "Setup for best results:"
+  echo "  1. Install Ollama — https://ollama.com"
+  echo "  2. ollama pull $RECOMMENDED"
   echo ""
 fi
 
-echo "==> Starting server at http://localhost:8000"
+echo "==> Starting at http://localhost:8000 (Agent tab)"
 export PATH="${HOME}/.local/bin:${PATH}"
 cd backend && exec python3 main.py

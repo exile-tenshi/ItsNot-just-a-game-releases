@@ -41,8 +41,8 @@
   "features": {
     "agent_mode": {
       "enabled": true,
-      "max_iterations": 25,
-      "description": "Autonomous agent loop with tool use — like Cursor Agent"
+      "max_iterations": 30,
+      "description": "Autonomous agent loop with trained verify-after-edit workflow"
     },
     "chat_mode": {
       "enabled": true,

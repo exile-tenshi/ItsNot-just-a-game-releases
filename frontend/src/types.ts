@@ -37,7 +37,7 @@ export const PROVIDERS: Record<
   local: {
     label: "Local (Ollama)",
     baseUrl: "http://127.0.0.1:11434/v1",
-    model: "llama3.1:8b",
+    model: "qwen2.5-coder:14b",
     apiKey: "local",
   },
   zai: {
@@ -63,16 +63,15 @@ export const PROVIDERS: Record<
 export const DEFAULT_SETTINGS: AppSettings = {
   apiKey: "local",
   baseUrl: "http://127.0.0.1:11434/v1",
-  model: "llama3.1:8b",
-  temperature: 0.6,
+  model: "qwen2.5-coder:14b",
+  temperature: 0.5,
   maxTokens: null,
   stream: true,
   thinkingEnabled: false,
   localMode: true,
   provider: "local",
   internetEnabled: true,
-  systemPrompt:
-    "You are an expert AI coding assistant with access to the workspace, terminal, git, and the internet.",
+  systemPrompt: "", // empty = use trained backend prompt
 };
 
 export interface LocalStatus {

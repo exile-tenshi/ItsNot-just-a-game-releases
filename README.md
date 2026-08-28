@@ -2,6 +2,30 @@
 
 Full coding AI on your PC with **internet access**, **cloud providers**, and every major feature from Cursor, Cline, and Windsurf.
 
+## Model quality (trained agent)
+
+The agent uses **trained prompts + few-shot examples** from `config/agent-training.json`:
+
+- 6-phase workflow: UNDERSTAND → EXPLORE → PLAN → EXECUTE → VERIFY → REPORT
+- Auto-indexes your project (README, structure, entry points, git log)
+- Verify-after-edit: runs tests/build after file changes
+- Smart model routing to best available model
+
+### Recommended models
+
+| Use case | Model |
+|----------|-------|
+| **Best local agent** | `ollama pull qwen2.5-coder:14b` |
+| Strong local fallback | `qwen2.5:14b` |
+| Best cloud | Z.AI `glm-5.1` or OpenAI `gpt-4o` |
+
+```bash
+ollama pull qwen2.5-coder:14b
+./start.sh
+```
+
+Configs: `config/agent-training.json`, `config/model-quality.json`
+
 ## Quick start
 
 ```bash

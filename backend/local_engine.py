@@ -121,7 +121,8 @@ def get_local_status() -> dict[str, Any]:
         },
         "ready": ollama["reachable"],
         "setup_hint": (
-            "Install Ollama from https://ollama.com then run: ollama pull llama3.1:8b"
+            "Install Ollama from https://ollama.com then run: ollama pull qwen2.5-coder:14b "
+            "(best for coding agent) or ollama pull qwen2.5:14b"
             if not ollama["reachable"]
             else None
         ),

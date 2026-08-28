@@ -1,0 +1,54 @@
+{
+  "version": "1.0.0",
+  "description": "Model quality tiers and routing — pick the best model for each task",
+  "capability_scores": {
+    "tool_calling": {
+      "glm-5.1": 98,
+      "glm-5.3": 99,
+      "gpt-4o": 97,
+      "anthropic/claude-sonnet-4": 97,
+      "qwen2.5-coder:14b": 88,
+      "qwen2.5:14b": 85,
+      "deepseek-coder-v2:16b": 87,
+      "llama3.1:70b": 82,
+      "llama3.1:8b": 55,
+      "mistral": 60
+    },
+    "coding": {
+      "glm-5.1": 96,
+      "qwen2.5-coder:14b": 90,
+      "deepseek-coder-v2:16b": 89,
+      "gpt-4o": 94
+    },
+    "reasoning": {
+      "glm-5.1": 95,
+      "glm-5.3": 97,
+      "gpt-4o": 93
+    }
+  },
+  "defaults": {
+    "agent_max_tokens": 8192,
+    "agent_temperature": 0.15,
+    "chat_temperature": 0.5,
+    "tool_choice": "auto",
+    "max_retries": 3,
+    "timeout_seconds": 120
+  },
+  "auto_pull_recommendations": [
+    {
+      "model": "qwen2.5-coder:14b",
+      "priority": 1,
+      "reason": "Best local model for coding agent tool use"
+    },
+    {
+      "model": "qwen2.5:14b",
+      "priority": 2,
+      "reason": "Strong general coding + tools"
+    },
+    {
+      "model": "llama3.1:8b",
+      "priority": 3,
+      "reason": "Fast fallback, lower VRAM"
+    }
+  ]
+}

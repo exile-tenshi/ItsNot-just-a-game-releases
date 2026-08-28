@@ -31,10 +31,10 @@ class Settings(BaseSettings):
     local_mode: bool = True
     inference_base_url: str = _INFERENCE.get("base_url", "http://127.0.0.1:11434/v1")
     local_api_key: str = _INFERENCE.get("api_key", "local")
-    glm_model: str = _INFERENCE.get("fallback_model", "llama3.1:8b")
+    glm_model: str = _INFERENCE.get("fallback_model", "qwen2.5-coder:14b")
     preferred_models: list[str] = _INFERENCE.get(
         "preferred_models",
-        ["glm-5.1", "qwen2.5:14b", "llama3.1:8b"],
+        ["qwen2.5-coder:14b", "qwen2.5:14b", "glm-5.1", "llama3.1:8b"],
     )
 
     # Optional cloud fallback (not required)

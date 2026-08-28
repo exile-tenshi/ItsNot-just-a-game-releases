@@ -13,10 +13,12 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from agent import load_agent_config, run_agent
+from codebase_index import build_project_brief
 from config import ROOT_DIR, settings
 from local_engine import get_local_status, load_local_config
 from openai_client import chat_completion, create_openai_client, iter_stream_chunks, resolve_model
 from pc_builder import PC_BUILDER_SYSTEM_PROMPT, build_custom_prompt, load_presets
+from prompts import build_chat_system_prompt, load_training
 from restriction_guard import RestrictionGuard
 from tools import execute_tool, get_tool_schemas
 from workspace import get_workspace_root, list_tree, read_file, set_workspace_root, write_file
@@ -46,6 +48,13 @@ FRONTEND_DIST = ROOT_DIR / "frontend" / "dist"
 class Message(BaseModel):
     role: str
     content: str
+
+
+def _ensure_chat_system(messages: list[Message]) -> list[dict[str, str]]:
+    payload = [{"role": m.role, "content": m.content} for m in messages]
+    if not any(m["role"] == "system" for m in payload):
+        payload.insert(0, {"role": "system", "content": build_chat_system_prompt()})
+    return payload
 
 
 class ChatRequest(BaseModel):
@@ -84,11 +93,12 @@ class PCBuildRequest(BaseModel):
 class AgentRequest(BaseModel):
     message: str
     context_files: list[str] = Field(default_factory=list)
-    temperature: float = 0.3
+    temperature: float | None = None
     api_key: str | None = None
     base_url: str | None = None
     model: str | None = None
     max_iterations: int | None = None
+    auto_index: bool = True
 
 
 class WorkspaceWriteRequest(BaseModel):
@@ -138,14 +148,27 @@ def get_config() -> dict[str, Any]:
     }
 
 
+@app.get("/api/agent/training")
+def agent_training() -> dict[str, Any]:
+    return load_training()
+
+
+@app.get("/api/codebase/brief")
+def codebase_brief() -> dict[str, str]:
+    return {"brief": build_project_brief()}
+
+
 @app.get("/api/agent/config")
 def agent_config() -> dict[str, Any]:
     cfg = load_agent_config()
+    training = load_training()
     return {
         "features": cfg.get("features", {}),
         "tools": cfg.get("tools", []),
         "providers": cfg.get("providers", {}),
         "internet": cfg.get("internet", {}),
+        "recommended_models": training.get("recommended_models", {}),
+        "quality_rules_count": len(training.get("quality_rules", [])),
     }
 
 
@@ -166,6 +189,7 @@ def agent_run(body: AgentRequest) -> StreamingResponse:
                 base_url=body.base_url,
                 temperature=body.temperature,
                 max_iterations=body.max_iterations,
+                auto_index=body.auto_index,
             ):
                 yield f"data: {json.dumps(event)}\n\n"
             yield "data: [DONE]\n\n"
@@ -398,10 +422,7 @@ def chat(body: ChatRequest) -> dict[str, Any]:
                 },
             )
 
-    messages_payload = [{"role": m.role, "content": m.content} for m in body.messages]
-
-    if body.stream:
-        raise HTTPException(status_code=400, detail="Use /api/chat/stream for streaming requests")
+    messages_payload = _ensure_chat_system(body.messages)
 
     try:
         response = chat_completion(
@@ -450,7 +471,7 @@ def chat_stream(body: ChatRequest) -> StreamingResponse:
                 },
             )
 
-    messages_payload = [{"role": m.role, "content": m.content} for m in body.messages]
+    messages_payload = _ensure_chat_system(body.messages)
 
     try:
         stream = chat_completion(

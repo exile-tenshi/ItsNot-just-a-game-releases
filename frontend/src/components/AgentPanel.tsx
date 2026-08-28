@@ -22,6 +22,8 @@ interface AgentEvent {
   iteration?: number;
   max?: number;
   message?: string;
+  model?: string;
+  temperature?: number;
 }
 
 interface ChatItem {
@@ -39,6 +41,8 @@ export function AgentPanel({ settings }: AgentPanelProps) {
   const [loading, setLoading] = useState(false);
   const [contextFiles, setContextFiles] = useState<string[]>([]);
   const [preview, setPreview] = useState<{ path: string; content: string } | null>(null);
+  const [activeModel, setActiveModel] = useState<string | null>(null);
+  const [trainingRules, setTrainingRules] = useState(0);
   const [features, setFeatures] = useState<string[]>([]);
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -51,8 +55,13 @@ export function AgentPanel({ settings }: AgentPanelProps) {
 
   useEffect(() => {
     loadTree();
-    apiFetch<{ tools: string[] }>("/api/agent/config")
-      .then((c) => setFeatures(c.tools || []))
+    apiFetch<{ tools: string[]; quality_rules_count?: number; recommended_models?: { agent_local?: string[] } }>(
+      "/api/agent/config",
+    )
+      .then((c) => {
+        setFeatures(c.tools || []);
+        setTrainingRules(c.quality_rules_count || 0);
+      })
       .catch(() => {});
   }, [loadTree]);
 
@@ -122,6 +131,10 @@ export function AgentPanel({ settings }: AgentPanelProps) {
 
           try {
             const event = JSON.parse(data) as AgentEvent;
+
+            if (event.type === "model" && event.model) {
+              setActiveModel(event.model);
+            }
 
             if (event.type === "content" && event.content) {
               assistantBuffer += event.content;
@@ -238,7 +251,8 @@ export function AgentPanel({ settings }: AgentPanelProps) {
         <div className="px-4 py-2 border-b border-glm-border bg-glm-card/50 flex flex-wrap gap-2 items-center">
           <span className="text-xs font-semibold text-glm-accent2">Agent Mode</span>
           <span className="text-[10px] text-glm-muted">
-            {features.length} tools · internet {settings.internetEnabled ? "on" : "off"}
+            {features.length} tools · {trainingRules} quality rules · internet on
+            {activeModel ? ` · ${activeModel}` : ""}
           </span>
           {contextFiles.map((f) => (
             <span

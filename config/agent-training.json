@@ -1,0 +1,100 @@
+{
+  "version": "1.0.0",
+  "description": "Agent training data — few-shot examples, quality rules, and verification standards for peak performance",
+  "quality_rules": [
+    "Never guess file paths — always list_directory or search_codebase first",
+    "Read a file completely (or relevant sections) before editing it",
+    "Use edit_file with exact old_string matches; never rewrite entire files when a patch suffices",
+    "After every code change, run the relevant test or build command to verify",
+    "If a command fails, read the error output carefully and fix root cause — do not retry blindly",
+    "Search the web when encountering unfamiliar APIs, version mismatches, or cryptic errors",
+    "Match existing code style: imports, naming, formatting, patterns in neighboring files",
+    "One logical change per edit_file call — easier to debug if something breaks",
+    "Summarize changes at the end with: files touched, commands run, how user can verify"
+  ],
+  "verification_checklist": [
+    "Did I read the files I modified?",
+    "Did I run tests or lint after changes?",
+    "Did the terminal command exit with code 0?",
+    "Are imports and types consistent with the project?",
+    "Did I handle edge cases mentioned in the user request?"
+  ],
+  "coding_standards": {
+    "general": "Write production-quality code. No placeholders, no TODO unless user asked. Prefer explicit over clever.",
+    "python": "Type hints on public functions. f-strings. pathlib over os.path. pytest for tests.",
+    "typescript": "Strict types. No any unless unavoidable. Match existing component patterns.",
+    "errors": "Actionable error messages. Fail fast with clear context."
+  },
+  "few_shot_examples": [
+    {
+      "task": "Fix a failing test",
+      "approach": [
+        "search_codebase for test file name",
+        "read_file the test and the module under test",
+        "run_terminal: pytest path/to/test -xvs",
+        "edit_file with minimal fix",
+        "run_terminal: pytest again to confirm pass"
+      ]
+    },
+    {
+      "task": "Add a new API endpoint",
+      "approach": [
+        "list_directory backend/",
+        "search_codebase for existing route patterns",
+        "read_file main router file",
+        "edit_file to add route following existing style",
+        "run_terminal: curl or pytest for the endpoint"
+      ]
+    },
+    {
+      "task": "Debug import error",
+      "approach": [
+        "run_terminal to reproduce error",
+        "read_file the failing file and traceback line",
+        "search_codebase for correct import path",
+        "edit_file fix import",
+        "run_terminal to verify"
+      ]
+    },
+    {
+      "task": "Research unfamiliar library",
+      "approach": [
+        "web_search: library name + specific API method",
+        "fetch_url official docs page if found",
+        "read_file project files that might use similar patterns",
+        "implement using verified API from docs"
+      ]
+    }
+  ],
+  "agent_workflow": {
+    "phases": ["UNDERSTAND", "EXPLORE", "PLAN", "EXECUTE", "VERIFY", "REPORT"],
+    "understand": "Restate the user goal in one sentence before any tool call",
+    "explore": "Use list_directory + search_codebase + read_file before writing code",
+    "plan": "Briefly list files to touch and commands to run",
+    "execute": "Make minimal edits with edit_file; create new files with write_file only when needed",
+    "verify": "Always run_terminal with test/build/lint after code changes",
+    "report": "Final message: Summary, Files changed, Commands run, Verification result"
+  },
+  "temperature_by_mode": {
+    "agent": 0.15,
+    "chat": 0.5,
+    "pc_builder": 0.6
+  },
+  "recommended_models": {
+    "agent_local": [
+      "qwen2.5-coder:14b",
+      "qwen2.5:14b",
+      "deepseek-coder-v2:16b",
+      "llama3.1:70b",
+      "glm4",
+      "llama3.1:8b"
+    ],
+    "agent_cloud": [
+      "glm-5.1",
+      "glm-5.3",
+      "gpt-4o",
+      "anthropic/claude-sonnet-4"
+    ],
+    "notes": "Tool-calling quality scales with model size. qwen2.5-coder:14b is best local default for coding agents."
+  }
+}
