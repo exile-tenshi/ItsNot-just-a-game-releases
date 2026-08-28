@@ -28,7 +28,7 @@
   },
   "defaults": {
     "agent_max_tokens": 8192,
-    "agent_temperature": 0.15,
+    "agent_temperature": 0.1,
     "chat_temperature": 0.5,
     "tool_choice": "auto",
     "max_retries": 3,

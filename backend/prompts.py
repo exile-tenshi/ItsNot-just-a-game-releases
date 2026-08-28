@@ -1,4 +1,4 @@
-"""Expert prompts and training config — loaded from config/agent-training.json."""
+"""Expert prompts — layered architecture matching Cursor, Claude Code, Cline."""
 
 from __future__ import annotations
 
@@ -10,6 +10,12 @@ from config import ROOT_DIR
 
 TRAINING_PATH = ROOT_DIR / "config" / "agent-training.json"
 QUALITY_PATH = ROOT_DIR / "config" / "model-quality.json"
+
+PROJECT_INSTRUCTION_FILES = [
+    ROOT_DIR / "AGENTS.md",
+    ROOT_DIR / "CLAUDE.md",
+    ROOT_DIR / ".cursor" / "rules" / "01-agent-behaviour.mdc",
+]
 
 
 def _load(path: Path) -> dict[str, Any]:
@@ -25,81 +31,170 @@ def load_quality() -> dict[str, Any]:
     return _load(QUALITY_PATH)
 
 
-def build_agent_system_prompt(project_brief: str = "") -> str:
-    training = load_training()
-    rules = training.get("quality_rules", [])
-    workflow = training.get("agent_workflow", {})
-    standards = training.get("coding_standards", {})
-    examples = training.get("few_shot_examples", [])
-    checklist = training.get("verification_checklist", [])
+def _load_project_instructions(max_chars: int = 4000) -> str:
+    """Load AGENTS.md / CLAUDE.md / .cursor/rules — Claude Code settingSources equivalent."""
+    parts: list[str] = []
+    for path in PROJECT_INSTRUCTION_FILES:
+        if path.is_file():
+            try:
+                text = path.read_text(encoding="utf-8")
+                # Strip YAML frontmatter from .mdc
+                if text.startswith("---"):
+                    end = text.find("---", 3)
+                    if end != -1:
+                        text = text[end + 3 :].strip()
+                parts.append(f"<!-- {path.name} -->\n{text[:1500]}")
+            except OSError:
+                pass
+    combined = "\n\n".join(parts)
+    return combined[:max_chars]
 
-    few_shot = "\n".join(
-        f"Example — {ex['task']}:\n  → " + "\n  → ".join(ex["approach"])
-        for ex in examples[:4]
+
+def _bullet_list(items: list[str], prefix: str = "- ") -> str:
+    return "\n".join(f"{prefix}{item}" for item in items)
+
+
+def build_agent_system_prompt(project_brief: str = "") -> str:
+    t = load_training()
+
+    dm = t.get("decision_making", {})
+    before = _bullet_list(dm.get("before_writing_code", []))
+    during = _bullet_list(dm.get("during_execution", []))
+    after = _bullet_list(dm.get("after_task", []))
+
+    few_shot = "\n\n".join(
+        f"**{ex.get('source', 'Example')}** — {ex['task']}:\n"
+        + "\n".join(f"  {i+1}. {step}" for i, step in enumerate(ex["approach"]))
+        for ex in t.get("few_shot_examples", [])
     )
 
+    workflow = t.get("agent_workflow", {})
     phases = workflow.get("phases", [])
     phase_detail = "\n".join(
-        f"  {p}: {workflow.get(p.lower(), '')}" for p in phases if workflow.get(p.lower())
+        f"  **{p}**: {workflow.get(p.lower(), '')}" for p in phases if workflow.get(p.lower())
     )
 
-    standards_text = "\n".join(f"  {k}: {v}" for k, v in standards.items())
+    risk = t.get("risk_policy", {})
+    standards = t.get("coding_standards", {})
+    standards_text = "\n".join(f"  **{k}**: {v}" for k, v in standards.items())
 
-    return f"""You are an elite AI coding agent — trained to match the quality of Cursor Agent, Claude Code, and GitHub Copilot Workspace combined.
+    comm = t.get("communication", {})
+    output = t.get("output_contract", {})
+    project_rules = _load_project_instructions()
 
-## Mission
-Complete user tasks correctly on the first try. Explore before editing. Verify after every change. Never hallucinate file paths or APIs.
+    return f"""<system_policy>
+<role>
+{t.get("role", "You are a senior software engineer.")}
+</role>
 
-## Workflow ({' → '.join(phases)})
-{phase_detail}
+<priorities>
+{_bullet_list(t.get("priorities", []))}
+</priorities>
 
-## Quality rules (always follow)
-{chr(10).join(f'{i+1}. {r}' for i, r in enumerate(rules))}
+<decision_making>
+Before writing code:
+{before}
 
-## Before finishing — verification checklist
-{chr(10).join(f'- {c}' for c in checklist)}
+During execution:
+{during}
 
-## Coding standards
+After task:
+{after}
+</decision_making>
+
+<universal_constraints>
+{_bullet_list(t.get("universal_constraints", []))}
+</universal_constraints>
+
+<operating_policy>
+{_bullet_list(t.get("operating_policy", []))}
+</operating_policy>
+
+<tool_policy>
+{_bullet_list(t.get("tool_policy", []))}
+</tool_policy>
+
+<risk_policy>
+Low risk (proceed): {", ".join(risk.get("low_risk_reversible", []))}
+Confirm first: {", ".join(risk.get("confirm_before", []))}
+</risk_policy>
+
+<communication>
+Style: {comm.get("style", "")}
+Uncertainty: {comm.get("uncertainty", "")}
+On completion: {comm.get("completion", "")}
+</communication>
+
+<output_contract>
+Structure: {output.get("structure", "")}
+Tool transparency: {output.get("tool_transparency", "")}
+Sources: {output.get("sources", "")}
+</output_contract>
+
+<known_failure_patterns>
+{_bullet_list(t.get("known_failure_patterns", []))}
+</known_failure_patterns>
+
+<anti_patterns>
+{_bullet_list(t.get("anti_patterns", []))}
+</anti_patterns>
+
+<verification_checklist>
+{_bullet_list(t.get("verification_checklist", []))}
+</verification_checklist>
+
+<coding_standards>
 {standards_text}
+</coding_standards>
 
-## Trained examples (follow this pattern)
+<workflow>
+{' → '.join(phases)}
+{phase_detail}
+</workflow>
+
+<trained_examples>
 {few_shot}
+</trained_examples>
 
-## Tool discipline
-- read_file BEFORE edit_file — always
-- search_codebase to find symbols, imports, patterns
-- run_terminal AFTER edits: pytest, npm test, tsc, lint, or build
-- web_search + fetch_url when docs or errors are unclear
-- git_status at start of multi-file tasks
+<project_rules>
+{project_rules}
+</project_rules>
 
-## Output style
-- Brief status updates when using tools
-- Final REPORT section: Summary | Files changed | Commands run | Verification
-
-{project_brief}"""
+<trusted_runtime_context>
+{project_brief}
+</trusted_runtime_context>
+</system_policy>"""
 
 
 def build_chat_system_prompt() -> str:
-    training = load_training()
-    standards = training.get("coding_standards", {}).get("general", "")
-    return f"""You are an expert AI coding assistant — precise, thorough, and production-focused.
+    t = load_training()
+    comm = t.get("communication", {})
+    standards = t.get("coding_standards", {}).get("general", "")
+    project_rules = _load_project_instructions(2000)
+
+    return f"""You are a senior software engineer — same quality bar as Cursor Chat and Claude Code.
 
 {standards}
 
-When giving code: complete, runnable snippets matching the project's style.
-When debugging: ask clarifying questions only if truly blocked; otherwise reason step-by-step.
-You have access to the user's PC locally with optional internet for docs."""
+Communication: {comm.get("style", "")} {comm.get("uncertainty", "")}
+
+When giving code: complete, runnable, matching project style.
+When debugging: reason step-by-step; one clarifying question only if truly blocked.
+
+<project_rules>
+{project_rules}
+</project_rules>"""
 
 
 def build_pc_builder_prompt() -> str:
     return """You are a world-class PC hardware advisor — trained on enthusiast builds, thermals, bottleneck analysis, and price/performance optimization.
 
-Give specific SKU-level recommendations. Include PSU headroom calculations, compatibility checks, expected FPS ranges, and upgrade paths.
-Be honest about diminishing returns above $3000 unless user wants no-compromise."""
+Give specific SKU-level recommendations. Include PSU headroom, compatibility checks, expected FPS ranges, and upgrade paths.
+Lead with the recommendation, then reasoning. Be honest about diminishing returns."""
 
 
 def agent_temperature() -> float:
-    return float(load_training().get("temperature_by_mode", {}).get("agent", 0.15))
+    return float(load_training().get("temperature_by_mode", {}).get("agent", 0.1))
 
 
 def chat_temperature() -> float:
@@ -107,7 +202,11 @@ def chat_temperature() -> float:
 
 
 def recommended_agent_models() -> list[str]:
-    training = load_training()
-    local = training.get("recommended_models", {}).get("agent_local", [])
-    cloud = training.get("recommended_models", {}).get("agent_cloud", [])
+    t = load_training()
+    local = t.get("recommended_models", {}).get("agent_local", [])
+    cloud = t.get("recommended_models", {}).get("agent_cloud", [])
     return local + cloud
+
+
+def plan_mode_file_threshold() -> int:
+    return int(load_training().get("plan_mode_triggers", {}).get("file_count_threshold", 5))

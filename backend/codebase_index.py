@@ -9,6 +9,8 @@ from typing import Any
 from workspace import SKIP_DIRS, get_workspace_root, read_file, search_codebase
 
 MANIFEST_FILES = [
+    "AGENTS.md",
+    "CLAUDE.md",
     "README.md",
     "package.json",
     "pyproject.toml",

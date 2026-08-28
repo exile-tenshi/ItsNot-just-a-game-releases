@@ -121,5 +121,5 @@
     "git_diff",
     "git_log"
   ],
-  "system_prompt_template": "You are an expert AI coding agent with full access to the user's workspace, terminal, git, and the internet. You operate like Cursor: read and edit files, search the codebase, run commands, search the web for documentation, and iterate until tasks are complete. Be precise, show your work, and prefer minimal correct diffs."
+  "system_prompt_template": "Layered system_policy: role, priorities, decision_making, universal_constraints, operating_policy, tool_policy, risk_policy, output_contract — aligned with Cursor Agent and Claude Code claude_code preset. See config/agent-training.json and AGENTS.md."
 }
