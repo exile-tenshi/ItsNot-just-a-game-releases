@@ -1,0 +1,207 @@
+{
+  "$schema": "./restriction-schema.json",
+  "version": "1.0.0",
+  "description": "Prohibited use categories for GLM-5.1 — aligned with Z.AI Terms and API Additional Terms",
+  "source": "https://chat.z.ai/legal-agreement/terms-of-service",
+  "categories": [
+    {
+      "id": "national-security",
+      "label": "National security / critical infrastructure",
+      "description": "Compromising or threatening critical infrastructure or national security",
+      "terms_section": "Terms §3.a",
+      "severity": "critical",
+      "guard_keywords": [
+        "critical infrastructure attack",
+        "national security exploit",
+        "power grid hack",
+        "water treatment sabotage"
+      ]
+    },
+    {
+      "id": "hate-extremism",
+      "label": "Hate, extremism, and terrorism",
+      "description": "Inciting racial discrimination, hate crimes, violent extremism, or terrorism",
+      "terms_section": "Terms §3.c",
+      "severity": "critical",
+      "guard_keywords": [
+        "hate crime instructions",
+        "terrorist attack plan",
+        "ethnic cleansing propaganda",
+        "violent extremist manifesto"
+      ]
+    },
+    {
+      "id": "disinformation",
+      "label": "False or misleading information",
+      "description": "Creating or disseminating false information that may mislead or harm",
+      "terms_section": "Terms §3.e",
+      "severity": "high",
+      "guard_keywords": [
+        "fake news campaign",
+        "disinformation bot network",
+        "fabricate election results",
+        "spread false medical cure"
+      ]
+    },
+    {
+      "id": "explicit-violent-content",
+      "label": "Explicit, violent, or shocking content",
+      "description": "Obscene, pornographic, violent, terroristic, or visually shocking content",
+      "terms_section": "Terms §3.f–g",
+      "severity": "critical",
+      "guard_keywords": [
+        "graphic torture scene",
+        "explicit sexual content minor",
+        "pornographic story write",
+        "violent murder fantasy detail"
+      ]
+    },
+    {
+      "id": "pii-harvesting",
+      "label": "Unauthorized personal data",
+      "description": "Collecting, inferring, or disseminating others' personal information without authorization",
+      "terms_section": "Terms §3.i",
+      "severity": "critical",
+      "guard_keywords": [
+        "collect social security numbers",
+        "harvest credit card database",
+        "dox someone address phone",
+        "scrape personal emails list"
+      ]
+    },
+    {
+      "id": "child-safety",
+      "label": "Child endangerment",
+      "description": "Endangering or exploiting children; inappropriate minor-facing applications",
+      "terms_section": "Terms §3.j",
+      "severity": "critical",
+      "guard_keywords": [
+        "child exploitation content",
+        "minor inappropriate chat app",
+        "underage sexual content"
+      ]
+    },
+    {
+      "id": "self-harm",
+      "label": "Self-harm and suicide",
+      "description": "Promoting or providing instructions for self-harm, suicide, or dangerous activities",
+      "terms_section": "Terms §3.k",
+      "severity": "critical",
+      "guard_keywords": [
+        "suicide instructions",
+        "self harm methods",
+        "commit suicide"
+      ]
+    },
+    {
+      "id": "malware-security-abuse",
+      "label": "Malware and network abuse",
+      "description": "Unauthorized access, malware, scraping, or network security attacks",
+      "terms_section": "Terms §4",
+      "severity": "critical",
+      "guard_keywords": [
+        "keylogger spyware",
+        "ransomware payload",
+        "ddos attack script",
+        "credential stuffing tool"
+      ]
+    },
+    {
+      "id": "reverse-engineering",
+      "label": "Reverse engineering and extraction",
+      "description": "Reverse engineering, decompiling, or extracting model parameters, code, or algorithms",
+      "terms_section": "Terms §4.d, API §f.vi",
+      "severity": "high",
+      "guard_keywords": [
+        "extract model weights",
+        "reverse engineer glm",
+        "decompile glm model"
+      ]
+    },
+    {
+      "id": "competing-model-training",
+      "label": "Training competing models",
+      "description": "Using outputs to develop, train, or enhance competing algorithms or external models",
+      "terms_section": "Terms §4.f, API §f.xii",
+      "severity": "high",
+      "guard_keywords": [
+        "competing llm glm",
+        "distill glm rival model",
+        "fine-tune rival model zhipu"
+      ]
+    },
+    {
+      "id": "professional-substitution",
+      "label": "Unqualified professional services",
+      "description": "Substituting for medical, legal, financial, news, or other qualified professional services",
+      "terms_section": "Terms §6.b, API §f.iii",
+      "severity": "high",
+      "guard_keywords": [
+        "diagnose symptoms prescribe",
+        "legal advice sue employer",
+        "investment portfolio guarantee",
+        "medical diagnosis treatment"
+      ]
+    },
+    {
+      "id": "automated-decision-making",
+      "label": "High-risk automated decision-making",
+      "description": "Decision-making in health, education, credit, employment, housing, legal, or critical infrastructure",
+      "terms_section": "Terms §6.a, API §f.iv",
+      "severity": "high",
+      "guard_keywords": [
+        "automated loan denial algorithm",
+        "hire fire employee ai decision",
+        "credit score automated reject",
+        "medical treatment automated decision"
+      ]
+    },
+    {
+      "id": "political-campaigns",
+      "label": "Political campaign content",
+      "description": "Generating content for or related to political campaigns",
+      "terms_section": "Terms §6.c",
+      "severity": "medium",
+      "guard_keywords": [
+        "political campaign ad script",
+        "election propaganda generate",
+        "voter manipulation messaging"
+      ]
+    },
+    {
+      "id": "ai-misrepresentation",
+      "label": "AI output misrepresentation",
+      "description": "Falsely claiming AI output is human-created or removing AI identifiers",
+      "terms_section": "Terms §5.a–c",
+      "severity": "medium",
+      "guard_keywords": [
+        "hide ai generated label",
+        "pretend ai wrote human essay",
+        "remove watermark ai content"
+      ]
+    },
+    {
+      "id": "coding-plan-misuse",
+      "label": "GLM Coding Plan misuse",
+      "description": "Using Coding Plan quota outside supported tools or for non-coding scenarios",
+      "terms_section": "Subscription Terms, Usage Policy",
+      "severity": "high",
+      "guard_keywords": [
+        "coding plan chatbot website",
+        "coding plan general purpose saas",
+        "share coding plan credentials"
+      ]
+    },
+    {
+      "id": "export-restricted",
+      "label": "Export-controlled end uses",
+      "description": "Benefit of restricted jurisdictions or prohibited military/human-rights end uses",
+      "terms_section": "Terms §API.6",
+      "severity": "critical",
+      "guard_keywords": [
+        "military weapons guidance system",
+        "sanctioned country deployment"
+      ]
+    }
+  ]
+}

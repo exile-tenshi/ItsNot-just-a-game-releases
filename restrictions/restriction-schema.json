@@ -1,0 +1,26 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "GLM-5.1 Restriction Category",
+  "type": "object",
+  "properties": {
+    "version": { "type": "string" },
+    "description": { "type": "string" },
+    "source": { "type": "string" },
+    "categories": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "label", "description"],
+        "properties": {
+          "id": { "type": "string" },
+          "label": { "type": "string" },
+          "description": { "type": "string" },
+          "examples": { "type": "array", "items": { "type": "string" } },
+          "guard_keywords": { "type": "array", "items": { "type": "string" } },
+          "severity": { "enum": ["low", "medium", "high", "critical"] },
+          "terms_section": { "type": "string" }
+        }
+      }
+    }
+  }
+}
