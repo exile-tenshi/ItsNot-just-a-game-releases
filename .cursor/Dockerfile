@@ -6,9 +6,9 @@ RUN apt-get update \
         git \
         ripgrep \
         ca-certificates \
+        nodejs \
+        npm \
     && rm -rf /var/lib/apt/lists/* \
-    && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
-    && apt-get install -y --no-install-recommends nodejs \
-    && rm -rf /var/lib/apt/lists/*
+    && useradd -m -s /bin/bash ubuntu
 
 USER ubuntu

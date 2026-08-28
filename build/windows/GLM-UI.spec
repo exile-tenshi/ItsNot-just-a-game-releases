@@ -5,7 +5,7 @@ import os
 from pathlib import Path
 
 block_cipher = None
-root = Path(SPECPATH).resolve()
+root = Path(SPECPATH).resolve().parent.parent
 
 datas = [
     (str(root / "frontend" / "dist"), "frontend/dist"),
