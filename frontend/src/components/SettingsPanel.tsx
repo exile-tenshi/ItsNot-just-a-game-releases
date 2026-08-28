@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import type { AppSettings, LocalStatus, ProviderId } from "../types";
-import { DEFAULT_SETTINGS, PROVIDERS, apiFetch } from "../types";
+import { DEFAULT_SETTINGS, PROVIDERS, apiContext, apiFetch } from "../types";
 
 interface SettingsPanelProps {
   settings: AppSettings;
@@ -30,9 +30,7 @@ export function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            api_key: settings.apiKey || "local",
-            base_url: settings.baseUrl,
-            model: settings.model,
+            ...apiContext(settings),
           }),
         },
       );
@@ -55,6 +53,22 @@ export function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
 
   const applyProvider = (id: ProviderId) => {
     const p = PROVIDERS[id];
+    if (id !== "local" && !settings.internetEnabled) {
+      const ok = window.confirm(
+        "Cloud AI providers connect to external servers. Enable internet access to approve external connections?",
+      );
+      if (!ok) return;
+      onChange({
+        ...settings,
+        provider: id,
+        baseUrl: p.baseUrl,
+        model: p.model,
+        apiKey: p.apiKey || settings.apiKey,
+        localMode: false,
+        internetEnabled: true,
+      });
+      return;
+    }
     onChange({
       ...settings,
       provider: id,
@@ -65,12 +79,29 @@ export function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
     });
   };
 
+  const setInternetEnabled = (enabled: boolean) => {
+    if (!enabled && settings.provider !== "local") {
+      const local = PROVIDERS.local;
+      onChange({
+        ...settings,
+        internetEnabled: false,
+        provider: "local",
+        baseUrl: local.baseUrl,
+        model: local.model,
+        apiKey: local.apiKey,
+        localMode: true,
+      });
+      return;
+    }
+    update("internetEnabled", enabled);
+  };
+
   return (
     <div className="max-w-2xl mx-auto px-4 py-6">
       <h2 className="text-2xl font-semibold mb-2">Settings</h2>
       <p className="text-glm-muted text-sm mb-6">
-        Local Ollama, cloud GLM-5.1/OpenAI, or OpenRouter. Internet enabled for web search and
-        docs.
+        Local Ollama runs fully offline on this PC. External connections (web search, URL fetch, cloud
+        AI) are blocked until you approve them below.
       </p>
 
       {localStatus && (
@@ -121,15 +152,23 @@ export function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
           </div>
         </Field>
 
-        <label className="flex items-center gap-2 text-sm cursor-pointer">
-          <input
-            type="checkbox"
-            checked={settings.internetEnabled}
-            onChange={(e) => update("internetEnabled", e.target.checked)}
-            className="rounded border-glm-border"
-          />
-          Enable internet (web search, fetch URLs, cloud APIs)
-        </label>
+        <div className="rounded-xl border border-glm-border bg-glm-card p-4">
+          <label className="flex items-start gap-3 text-sm cursor-pointer">
+            <input
+              type="checkbox"
+              checked={settings.internetEnabled}
+              onChange={(e) => setInternetEnabled(e.target.checked)}
+              className="rounded border-glm-border mt-0.5"
+            />
+            <span>
+              <span className="font-medium block">Allow external connections</span>
+              <span className="text-xs text-glm-muted">
+                Required for web search, fetch URL, and cloud providers (Z.AI, OpenAI, OpenRouter).
+                Local Ollama works without this.
+              </span>
+            </span>
+          </label>
+        </div>
 
         <Field label="Local server URL" hint="Ollama OpenAI-compatible endpoint (default)">
           <input
@@ -242,7 +281,7 @@ export function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
           <li>read_file / write_file / edit_file — file operations</li>
           <li>search_codebase — regex search across project</li>
           <li>run_terminal — shell commands in workspace</li>
-          <li>web_search / fetch_url — internet docs lookup</li>
+          <li>web_search / fetch_url — requires external connection approval in Settings</li>
           <li>git_status / git_diff / git_log — version control</li>
         </ul>
       </div>

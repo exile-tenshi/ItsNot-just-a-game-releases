@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { AppSettings } from "../types";
-import { apiFetch } from "../types";
+import { apiContext, apiFetch } from "../types";
 
 interface AgentPanelProps {
   settings: AppSettings;
@@ -105,9 +105,7 @@ export function AgentPanel({ settings }: AgentPanelProps) {
           message: text,
           context_files: contextFiles,
           temperature: settings.temperature,
-          api_key: settings.apiKey || "local",
-          base_url: settings.baseUrl,
-          model: settings.model,
+          ...apiContext(settings),
         }),
       });
 
@@ -266,7 +264,8 @@ export function AgentPanel({ settings }: AgentPanelProps) {
         <div className="px-4 py-2 border-b border-glm-border bg-glm-card/50 flex flex-wrap gap-2 items-center">
           <span className="text-xs font-semibold text-glm-accent2">Agent Mode</span>
           <span className="text-[10px] text-glm-muted">
-            {features.length} tools · {trainingRules} quality rules · internet on
+            {features.length} tools · {trainingRules} quality rules ·{" "}
+            {settings.internetEnabled ? "internet approved" : "local only"}
             {activeModel ? ` · ${activeModel}` : ""}
           </span>
           {contextFiles.map((f) => (

@@ -6,12 +6,13 @@ from typing import Any, AsyncIterator, Iterator
 
 from openai import OpenAI
 
-from config import settings
-from local_engine import detect_ollama, pick_best_model, resolve_api_key, resolve_base_url
+from external_access import ExternalAccessDenied, gate
+from local_engine import detect_ollama, is_local_url, pick_best_model, resolve_api_key, resolve_base_url
 from prompts import recommended_agent_models
 
 
 def create_openai_client(api_key: str | None = None, base_url: str | None = None) -> OpenAI:
+    gate.ensure_inference_allowed(base_url)
     url = resolve_base_url(base_url)
     key = resolve_api_key(api_key, url)
     return OpenAI(api_key=key, base_url=url, max_retries=3, timeout=120.0)
@@ -50,8 +51,7 @@ def resolve_best_agent_model(model: str | None, base_url: str | None = None) -> 
 
 
 def is_cloud_url(base_url: str) -> bool:
-    lowered = base_url.lower()
-    return not any(h in lowered for h in ("127.0.0.1", "localhost", "11434"))
+    return not is_local_url(base_url)
 
 
 def chat_completion(

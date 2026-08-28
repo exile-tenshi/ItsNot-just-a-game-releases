@@ -2,10 +2,11 @@
   "version": "1.0.0",
   "description": "Coding agent capabilities — parity with Cursor, Cline, Windsurf, and similar AI coding apps",
   "internet": {
-    "enabled": true,
-    "web_search": true,
-    "fetch_urls": true,
-    "cloud_api_providers": true,
+    "enabled": false,
+    "requires_user_approval": true,
+    "web_search": false,
+    "fetch_urls": false,
+    "cloud_api_providers": false,
     "documentation_lookup": true,
     "package_registry_lookup": true
   },

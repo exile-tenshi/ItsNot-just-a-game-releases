@@ -11,8 +11,12 @@ from urllib.request import Request, urlopen
 USER_AGENT = "GLM-5.1-UI/2.0 (Coding Agent)"
 
 
+from external_access import ExternalAccessDenied, gate
+
+
 def web_search(query: str, max_results: int = 8) -> list[dict[str, str]]:
     """Search the web via DuckDuckGo HTML (no API key required)."""
+    gate.require_internet("web search")
     url = f"https://html.duckduckgo.com/html/?q={quote_plus(query)}"
     req = Request(url, headers={"User-Agent": USER_AGENT})
     with urlopen(req, timeout=15) as resp:
@@ -49,6 +53,7 @@ def web_search(query: str, max_results: int = 8) -> list[dict[str, str]]:
 
 def fetch_url(url: str, max_bytes: int = 100_000) -> dict[str, Any]:
     """Fetch a URL and return readable text content."""
+    gate.require_internet("URL fetch")
     parsed = urlparse(url)
     if parsed.scheme not in ("http", "https"):
         raise ValueError("Only http/https URLs allowed")

@@ -8,6 +8,7 @@ from typing import Any, Iterator
 
 from code_checker import format_verify_report, load_checker_config, verify_code
 from codebase_index import build_project_brief, find_relevant_files
+from external_access import ExternalAccessDenied, gate
 from openai_client import chat_completion, resolve_best_agent_model
 from prompts import agent_temperature, build_agent_system_prompt, load_quality, load_training
 from tools import execute_tool, get_tool_schemas
@@ -63,8 +64,10 @@ def run_agent(
     temperature: float | None = None,
     max_iterations: int | None = None,
     auto_index: bool = True,
+    internet_enabled: bool | None = None,
 ) -> Iterator[dict[str, Any]]:
     """Run trained agent loop with project brief, smart routing, and verify-after-edit."""
+    effective_internet = gate.resolve_preference(internet_enabled)
     cfg = load_agent_config()
     quality = load_quality()
     defaults = quality.get("defaults", {})
@@ -102,7 +105,13 @@ def run_agent(
 
     messages.append({"role": "user", "content": user_message})
 
-    tools = get_tool_schemas()
+    tools = get_tool_schemas(internet_enabled=effective_internet)
+    try:
+        gate.ensure_inference_allowed(base_url)
+    except ExternalAccessDenied as exc:
+        yield {"type": "error", "message": str(exc)}
+        return
+
     model_name = resolve_best_agent_model(model, base_url)
     yield {"type": "model", "model": model_name, "temperature": temp}
 
@@ -216,7 +225,7 @@ def run_agent(
             args = tc.function.arguments
             yield {"type": "tool_call", "name": name, "arguments": args, "id": tc.id}
 
-            result = execute_tool(name, args)
+            result = execute_tool(name, args, internet_enabled=effective_internet)
             yield {"type": "tool_result", "name": name, "id": tc.id, "result": result[:8000]}
 
             parsed = _parse_tool_args(args)

@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import type { AppSettings, Message } from "../types";
-import { apiFetch } from "../types";
+import { apiContext, apiFetch } from "../types";
 
 interface ChatPanelProps {
   settings: AppSettings;
@@ -54,9 +54,7 @@ export function ChatPanel({ settings }: ChatPanelProps) {
             max_tokens: settings.maxTokens,
             stream: true,
             thinking_enabled: settings.thinkingEnabled,
-            api_key: settings.apiKey || undefined,
-            base_url: settings.baseUrl || undefined,
-            model: settings.model,
+            ...apiContext(settings),
           }),
         });
 
@@ -109,9 +107,7 @@ export function ChatPanel({ settings }: ChatPanelProps) {
             max_tokens: settings.maxTokens,
             stream: false,
             thinking_enabled: settings.thinkingEnabled,
-            api_key: settings.apiKey || undefined,
-            base_url: settings.baseUrl || undefined,
-            model: settings.model,
+            ...apiContext(settings),
           }),
         });
         setMessages((prev) => [...prev, { role: "assistant", content: data.content }]);
@@ -241,7 +237,7 @@ export function ChatPanel({ settings }: ChatPanelProps) {
           </button>
         </div>
         <p className="text-xs text-glm-muted mt-2 text-center">
-          Local mode — unlimited messages · No internet required
+          Local mode — unlimited messages · External connections off until approved in Settings
         </p>
       </div>
     </div>

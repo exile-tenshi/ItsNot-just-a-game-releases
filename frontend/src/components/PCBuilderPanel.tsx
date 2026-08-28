@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { AppSettings, PCBuildPreset } from "../types";
-import { apiFetch } from "../types";
+import { apiContext, apiFetch } from "../types";
 
 interface PCBuilderPanelProps {
   settings: AppSettings;
@@ -42,9 +42,7 @@ export function PCBuilderPanel({ settings }: PCBuilderPanelProps) {
     const body: Record<string, unknown> = {
       stream: true,
       temperature: 0.7,
-      api_key: settings.apiKey || "local",
-      base_url: settings.baseUrl,
-      model: settings.model,
+      ...apiContext(settings),
     };
 
     if (presetId) {

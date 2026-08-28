@@ -17,6 +17,7 @@ from ai_creation import get_creation_by_id, list_by_category, load_creation_cata
 from codebase_index import build_project_brief
 from code_checker import format_verify_report, load_checker_config, verify_code
 from config import ROOT_DIR, settings
+from external_access import ExternalAccessDenied, gate
 from loopholes import count_by_used, list_all_loopholes, load_loopholes
 from openai_client import chat_completion, create_openai_client, iter_stream_chunks, resolve_model
 from pc_builder import PC_BUILDER_SYSTEM_PROMPT, build_custom_prompt, load_presets
@@ -47,6 +48,21 @@ guard = RestrictionGuard(
 FRONTEND_DIST = ROOT_DIR / "frontend" / "dist"
 
 
+def _apply_external_access(internet_enabled: bool | None) -> None:
+    gate.resolve_preference(internet_enabled)
+
+
+def _external_access_error(exc: ExternalAccessDenied) -> HTTPException:
+    return HTTPException(
+        status_code=403,
+        detail={"error": exc.reason, "message": exc.detail},
+    )
+
+
+class ExternalAccessRequest(BaseModel):
+    internet_enabled: bool
+
+
 class Message(BaseModel):
     role: str
     content: str
@@ -69,6 +85,7 @@ class ChatRequest(BaseModel):
     base_url: str | None = None
     model: str | None = None
     skip_guard: bool = False
+    internet_enabled: bool | None = None
 
 
 class GuardModeRequest(BaseModel):
@@ -90,6 +107,7 @@ class PCBuildRequest(BaseModel):
     api_key: str | None = None
     base_url: str | None = None
     model: str | None = None
+    internet_enabled: bool | None = None
 
 
 class AgentRequest(BaseModel):
@@ -101,6 +119,7 @@ class AgentRequest(BaseModel):
     model: str | None = None
     max_iterations: int | None = None
     auto_index: bool = True
+    internet_enabled: bool | None = None
 
 
 class WorkspaceWriteRequest(BaseModel):
@@ -115,6 +134,7 @@ class WorkspaceRootRequest(BaseModel):
 class ToolRunRequest(BaseModel):
     name: str
     arguments: dict[str, Any] = Field(default_factory=dict)
+    internet_enabled: bool | None = None
 
 
 class VerifyCodeRequest(BaseModel):
@@ -146,12 +166,31 @@ def get_config() -> dict[str, Any]:
         "guard_mode": guard.mode,
         "requires_api_key": local_cfg.get("requires_api_key", False),
         "requires_internet": local_cfg.get("requires_internet", False),
-        "internet_enabled": settings.internet_enabled,
+        "internet_enabled": gate.internet_enabled,
+        "internet_requires_user_approval": True,
         "internet": local_cfg.get("internet", {}),
         "usage_limits": local_cfg.get("usage_limits", {}),
         "workspace_root": str(get_workspace_root()),
         "ready": status["ready"],
         "setup_hint": status.get("setup_hint"),
+    }
+
+
+@app.get("/api/external-access")
+def get_external_access() -> dict[str, Any]:
+    return {
+        "internet_enabled": gate.internet_enabled,
+        "requires_user_approval": True,
+        "local_inference_always_allowed": True,
+    }
+
+
+@app.post("/api/external-access")
+def set_external_access(body: ExternalAccessRequest) -> dict[str, Any]:
+    gate.set_user_approval(body.internet_enabled)
+    return {
+        "internet_enabled": gate.internet_enabled,
+        "message": "External connections enabled" if gate.internet_enabled else "External connections blocked — local only",
     }
 
 
@@ -183,12 +222,15 @@ def agent_config() -> dict[str, Any]:
 
 
 @app.get("/api/agent/tools")
-def agent_tools() -> list[dict[str, Any]]:
-    return get_tool_schemas()
+def agent_tools(internet_enabled: bool | None = None) -> list[dict[str, Any]]:
+    _apply_external_access(internet_enabled)
+    return get_tool_schemas(internet_enabled=gate.internet_enabled)
 
 
 @app.post("/api/agent/run")
 def agent_run(body: AgentRequest) -> StreamingResponse:
+    _apply_external_access(body.internet_enabled)
+
     def event_generator():
         try:
             for event in run_agent(
@@ -200,6 +242,7 @@ def agent_run(body: AgentRequest) -> StreamingResponse:
                 temperature=body.temperature,
                 max_iterations=body.max_iterations,
                 auto_index=body.auto_index,
+                internet_enabled=gate.internet_enabled,
             ):
                 yield f"data: {json.dumps(event)}\n\n"
             yield "data: [DONE]\n\n"
@@ -253,7 +296,8 @@ def workspace_write_file(body: WorkspaceWriteRequest) -> dict[str, Any]:
 
 @app.post("/api/tools/run")
 def run_tool(body: ToolRunRequest) -> dict[str, str]:
-    result = execute_tool(body.name, body.arguments)
+    _apply_external_access(body.internet_enabled)
+    result = execute_tool(body.name, body.arguments, internet_enabled=gate.internet_enabled)
     return {"name": body.name, "result": result}
 
 
@@ -304,6 +348,12 @@ def pc_builder_presets() -> dict[str, Any]:
 
 @app.post("/api/pc-builder/build")
 def pc_builder_build(body: PCBuildRequest) -> dict[str, Any]:
+    _apply_external_access(body.internet_enabled)
+    try:
+        gate.ensure_inference_allowed(body.base_url)
+    except ExternalAccessDenied as exc:
+        raise _external_access_error(exc) from exc
+
     presets = load_presets()
     prompt = body.extras
 
@@ -339,6 +389,8 @@ def pc_builder_build(body: PCBuildRequest) -> dict[str, Any]:
             api_key=body.api_key,
             base_url=body.base_url,
         )
+    except ExternalAccessDenied as exc:
+        raise _external_access_error(exc) from exc
     except Exception as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
 
@@ -352,6 +404,12 @@ def pc_builder_build(body: PCBuildRequest) -> dict[str, Any]:
 
 @app.post("/api/pc-builder/build/stream")
 def pc_builder_build_stream(body: PCBuildRequest) -> StreamingResponse:
+    _apply_external_access(body.internet_enabled)
+    try:
+        gate.ensure_inference_allowed(body.base_url)
+    except ExternalAccessDenied as exc:
+        raise _external_access_error(exc) from exc
+
     presets = load_presets()
     prompt = body.extras
 
@@ -384,6 +442,8 @@ def pc_builder_build_stream(body: PCBuildRequest) -> StreamingResponse:
             api_key=body.api_key,
             base_url=body.base_url,
         )
+    except ExternalAccessDenied as exc:
+        raise _external_access_error(exc) from exc
     except Exception as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
 
@@ -479,8 +539,10 @@ def chat(body: ChatRequest) -> dict[str, Any]:
             )
 
     messages_payload = _ensure_chat_system(body.messages)
+    _apply_external_access(body.internet_enabled)
 
     try:
+        gate.ensure_inference_allowed(body.base_url)
         response = chat_completion(
             messages_payload,
             model=body.model,
@@ -491,6 +553,8 @@ def chat(body: ChatRequest) -> dict[str, Any]:
             api_key=body.api_key,
             base_url=body.base_url,
         )
+    except ExternalAccessDenied as exc:
+        raise _external_access_error(exc) from exc
     except Exception as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
 
@@ -528,8 +592,10 @@ def chat_stream(body: ChatRequest) -> StreamingResponse:
             )
 
     messages_payload = _ensure_chat_system(body.messages)
+    _apply_external_access(body.internet_enabled)
 
     try:
+        gate.ensure_inference_allowed(body.base_url)
         stream = chat_completion(
             messages_payload,
             model=body.model,
@@ -540,6 +606,8 @@ def chat_stream(body: ChatRequest) -> StreamingResponse:
             api_key=body.api_key,
             base_url=body.base_url,
         )
+    except ExternalAccessDenied as exc:
+        raise _external_access_error(exc) from exc
     except Exception as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
 
@@ -629,11 +697,14 @@ def run_restriction_tests(body: TestRunRequest | None = None) -> dict[str, Any]:
 
 
 @app.post("/api/verify-key")
-def verify_connection(body: dict[str, str]) -> dict[str, Any]:
+def verify_connection(body: dict[str, Any]) -> dict[str, Any]:
+    if "internet_enabled" in body:
+        _apply_external_access(bool(body["internet_enabled"]))
     base_url = body.get("base_url") or settings.inference_base_url
     api_key = body.get("api_key")
 
     try:
+        gate.ensure_inference_allowed(base_url)
         client = create_openai_client(api_key=api_key, base_url=base_url)
         model = resolve_model(body.get("model"), base_url)
         response = client.chat.completions.create(
@@ -647,6 +718,8 @@ def verify_connection(body: dict[str, str]) -> dict[str, Any]:
             "sample": (response.choices[0].message.content or "")[:100],
             "local": settings.local_mode,
         }
+    except ExternalAccessDenied as exc:
+        return {"valid": False, "error": exc.detail, "code": exc.reason}
     except Exception as exc:
         return {"valid": False, "error": str(exc)}
 

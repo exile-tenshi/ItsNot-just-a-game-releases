@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AgentPanel } from "./components/AgentPanel";
 import { Header } from "./components/Header";
 import { ChatPanel } from "./components/ChatPanel";
@@ -8,7 +8,7 @@ import { SettingsPanel } from "./components/SettingsPanel";
 import { PCBuilderPanel } from "./components/PCBuilderPanel";
 import { CreationPanel } from "./components/CreationPanel";
 import type { AppSettings, TabId } from "./types";
-import { DEFAULT_SETTINGS } from "./types";
+import { DEFAULT_SETTINGS, syncExternalAccess } from "./types";
 
 function loadSettings(): AppSettings {
   try {
@@ -26,9 +26,14 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<TabId>("agent");
   const [settings, setSettings] = useState<AppSettings>(loadSettings);
 
+  useEffect(() => {
+    void syncExternalAccess(settings.internetEnabled);
+  }, []);
+
   const handleSettingsChange = (next: AppSettings) => {
     setSettings(next);
     localStorage.setItem("glm-5.1-settings", JSON.stringify(next));
+    void syncExternalAccess(next.internetEnabled);
   };
 
   return (

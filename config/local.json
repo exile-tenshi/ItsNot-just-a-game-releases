@@ -5,11 +5,12 @@
   "requires_api_key": false,
   "requires_internet": false,
   "internet": {
-    "enabled": true,
-    "web_search": true,
-    "fetch_urls": true,
-    "cloud_providers": true,
-    "note": "Internet used for web search, docs, and optional cloud AI providers"
+    "enabled": false,
+    "web_search": false,
+    "fetch_urls": false,
+    "cloud_providers": false,
+    "requires_user_approval": true,
+    "note": "Off by default — user must enable in Settings to allow web search, URL fetch, or cloud AI providers"
   },
   "inference": {
     "provider": "ollama",

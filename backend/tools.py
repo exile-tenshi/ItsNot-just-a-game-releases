@@ -9,6 +9,7 @@ from typing import Any, Callable
 
 from config import settings
 from code_checker import format_verify_report, verify_code
+from external_access import ExternalAccessDenied, gate
 from web_search import fetch_url, web_search
 from workspace import (
     edit_file,
@@ -30,7 +31,14 @@ BLOCKED_COMMANDS = [
 ]
 
 
-def get_tool_schemas() -> list[dict[str, Any]]:
+def get_tool_schemas(*, internet_enabled: bool | None = None) -> list[dict[str, Any]]:
+    schemas = _all_tool_schemas()
+    if internet_enabled is False or (internet_enabled is None and not gate.internet_enabled):
+        return gate.filter_tool_schemas(schemas)
+    return schemas
+
+
+def _all_tool_schemas() -> list[dict[str, Any]]:
     return [
         {
             "type": "function",
@@ -292,7 +300,15 @@ TOOL_HANDLERS: dict[str, Callable[..., Any]] = {
 }
 
 
-def execute_tool(name: str, arguments: str | dict[str, Any]) -> str:
+def execute_tool(name: str, arguments: str | dict[str, Any], *, internet_enabled: bool | None = None) -> str:
+    if internet_enabled is not None:
+        gate.resolve_preference(internet_enabled)
+
+    try:
+        gate.ensure_web_tool(name)
+    except ExternalAccessDenied as exc:
+        return json.dumps({"error": str(exc), "code": exc.reason})
+
     if isinstance(arguments, str):
         args = json.loads(arguments) if arguments else {}
     else:

@@ -70,7 +70,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   thinkingEnabled: false,
   localMode: true,
   provider: "local",
-  internetEnabled: true,
+  internetEnabled: false,
   systemPrompt: "", // empty = use trained backend prompt
 };
 
@@ -101,6 +101,28 @@ export interface PCBuildPreset {
   target: string;
   highlights: string[];
   prompt: string;
+}
+
+/** Fields sent with API calls — includes user-approved external access flag. */
+export function apiContext(settings: AppSettings): Record<string, unknown> {
+  return {
+    internet_enabled: settings.internetEnabled,
+    api_key: settings.apiKey || undefined,
+    base_url: settings.baseUrl || undefined,
+    model: settings.model,
+  };
+}
+
+export async function syncExternalAccess(enabled: boolean): Promise<void> {
+  try {
+    await apiFetch("/api/external-access", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ internet_enabled: enabled }),
+    });
+  } catch {
+    /* backend may be offline during dev */
+  }
 }
 
 export async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {

@@ -161,30 +161,30 @@
         {
           "id": "internet_enabled_not_enforced_backend",
           "name": "INTERNET_ENABLED flag unused",
-          "description": "settings.internet_enabled is exposed in /api/config but never checked before web_search or fetch_url.",
-          "used": true,
-          "files": ["backend/config.py", "backend/web_search.py", "backend/tools.py"]
+          "description": "Previously settings.internet_enabled was never checked. Now enforced via external_access gate on all outbound tools and cloud inference.",
+          "used": false,
+          "files": ["backend/external_access.py", "backend/tools.py", "backend/main.py"]
         },
         {
           "id": "frontend_internet_toggle_cosmetic",
           "name": "Frontend internet toggle cosmetic",
-          "description": "settings.internetEnabled is stored in localStorage only and never sent to the backend.",
-          "used": true,
-          "files": ["frontend/src/types.ts", "frontend/src/components/SettingsPanel.tsx"]
+          "description": "Previously stored in localStorage only. Now synced to POST /api/external-access and sent as internet_enabled on every API request.",
+          "used": false,
+          "files": ["frontend/src/App.tsx", "frontend/src/types.ts", "backend/main.py"]
         },
         {
           "id": "agent_ui_hardcoded_internet_on",
           "name": "Agent UI shows internet on always",
-          "description": "AgentPanel hardcodes internet on in the status bar regardless of internetEnabled setting.",
-          "used": true,
+          "description": "Previously hardcoded internet on. Now shows local only or internet approved from settings.",
+          "used": false,
           "files": ["frontend/src/components/AgentPanel.tsx"]
         },
         {
           "id": "requires_internet_metadata_only",
           "name": "requires_internet not enforced",
-          "description": "requires_internet flags in configs are informational only.",
-          "used": true,
-          "files": ["config/local.json", "config/coding-agent.json"]
+          "description": "Cloud provider flags still informational in JSON configs, but runtime now blocks cloud base_url without user internet approval.",
+          "used": false,
+          "files": ["config/coding-agent.json", "backend/external_access.py"]
         },
         {
           "id": "cors_wildcard_local_mode",
@@ -216,10 +216,10 @@
         },
         {
           "id": "web_search_unrestricted",
-          "name": "Web search unrestricted",
-          "description": "web_search has no content filtering and no guard check before querying DuckDuckGo.",
+          "name": "Web search unrestricted when approved",
+          "description": "web_search is blocked by default. When user approves external connections, search has no content filter (by design).",
           "used": true,
-          "files": ["backend/web_search.py", "backend/tools.py"]
+          "files": ["backend/web_search.py", "backend/external_access.py"]
         }
       ]
     },
@@ -417,7 +417,6 @@
     "POST /api/chat with skip_guard true when guard is enforce",
     "POST /api/tools/run — direct shell, files, web with no guard",
     "Uninstall linters — verify reports ZERO ERRORS YES",
-    "Mention verify or pass in agent text without running checkers",
-    "internetEnabled checkbox does nothing — web tools always work"
+    "Mention verify or pass in agent text without running checkers"
   ]
 }
