@@ -1,0 +1,23 @@
+{
+  "name": "GLM-5.1 UI",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": "."
+  },
+  "user": "ubuntu",
+  "install": "chmod +x scripts/cloud-agent-install.sh && ./scripts/cloud-agent-install.sh",
+  "start": "cd backend && python3 main.py",
+  "ports": [
+    {
+      "name": "GLM-5.1 UI",
+      "port": 8000
+    }
+  ],
+  "terminals": [
+    {
+      "name": "GLM-5.1 UI",
+      "command": "cd backend && python3 main.py",
+      "description": "Local-first coding agent API + UI on port 8000"
+    }
+  ]
+}
