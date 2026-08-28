@@ -3,10 +3,11 @@ import type { TabId } from "../types";
 import { apiFetch } from "../types";
 
 const NAV: { id: TabId; label: string; icon: string }[] = [
+  { id: "agent", label: "Agent", icon: "🤖" },
   { id: "chat", label: "Chat", icon: "💬" },
   { id: "pcbuilder", label: "PC Builder", icon: "🖥️" },
   { id: "restrictions", label: "Restrictions", icon: "📋" },
-  { id: "tests", label: "Test Suite", icon: "🧪" },
+  { id: "tests", label: "Tests", icon: "🧪" },
   { id: "settings", label: "Settings", icon: "⚙️" },
 ];
 
@@ -42,7 +43,7 @@ export function Header({ activeTab, onTabChange }: HeaderProps) {
               GLM-5.1 UI
             </h1>
             <p className="text-xs text-glm-muted truncate">
-              Local · {model} · {localReady ? "ready" : "needs Ollama"}
+              Agent · {model} · {localReady ? "ready" : "needs model"}
             </p>
           </div>
         </div>

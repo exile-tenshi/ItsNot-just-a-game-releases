@@ -55,6 +55,9 @@ class Settings(BaseSettings):
     restrictions_test_config: Path = ROOT_DIR / "config" / "restrictions-test.json"
     local_config_path: Path = ROOT_DIR / "config" / "local.json"
     pc_builder_config_path: Path = ROOT_DIR / "config" / "pc-builder-presets.json"
+    coding_agent_config_path: Path = ROOT_DIR / "config" / "coding-agent.json"
+    workspace_root: str = str(ROOT_DIR)
+    internet_enabled: bool = True
 
     @property
     def cors_origin_list(self) -> list[str]:

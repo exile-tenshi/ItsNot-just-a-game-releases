@@ -1,9 +1,16 @@
 {
-  "version": "1.0.0",
-  "mode": "local",
-  "description": "Local-only configuration — runs entirely on your PC with no cloud API keys or usage caps",
+  "version": "2.0.0",
+  "mode": "hybrid",
+  "description": "Runs on your PC with optional internet — full coding agent like Cursor",
   "requires_api_key": false,
   "requires_internet": false,
+  "internet": {
+    "enabled": true,
+    "web_search": true,
+    "fetch_urls": true,
+    "cloud_providers": true,
+    "note": "Internet used for web search, docs, and optional cloud AI providers"
+  },
   "inference": {
     "provider": "ollama",
     "base_url": "http://127.0.0.1:11434/v1",
@@ -27,7 +34,11 @@
     "max_tokens_per_request": 131072,
     "max_concurrent_streams": 32,
     "daily_message_cap": null,
-    "note": "Local mode has no artificial caps — limited only by your CPU/GPU/RAM"
+    "note": "No artificial caps — local or cloud, limited by your hardware or provider quota"
+  },
+  "coding_agent": {
+    "enabled": true,
+    "config": "config/coding-agent.json"
   },
   "restriction_guard": {
     "default_mode": "disabled",

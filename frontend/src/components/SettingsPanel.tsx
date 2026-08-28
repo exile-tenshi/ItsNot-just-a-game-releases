@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
-import type { AppSettings, LocalStatus } from "../types";
-import { DEFAULT_SETTINGS, apiFetch } from "../types";
+import type { AppSettings, LocalStatus, ProviderId } from "../types";
+import { DEFAULT_SETTINGS, PROVIDERS, apiFetch } from "../types";
 
 interface SettingsPanelProps {
   settings: AppSettings;
@@ -53,11 +53,24 @@ export function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
     if (active) onChange({ ...settings, model: active });
   };
 
+  const applyProvider = (id: ProviderId) => {
+    const p = PROVIDERS[id];
+    onChange({
+      ...settings,
+      provider: id,
+      baseUrl: p.baseUrl,
+      model: p.model,
+      apiKey: p.apiKey || settings.apiKey,
+      localMode: id === "local",
+    });
+  };
+
   return (
     <div className="max-w-2xl mx-auto px-4 py-6">
       <h2 className="text-2xl font-semibold mb-2">Settings</h2>
       <p className="text-glm-muted text-sm mb-6">
-        Runs locally on your PC via Ollama — no API key or internet required. Unlimited usage.
+        Local Ollama, cloud GLM-5.1/OpenAI, or OpenRouter. Internet enabled for web search and
+        docs.
       </p>
 
       {localStatus && (
@@ -89,6 +102,35 @@ export function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
       )}
 
       <div className="space-y-5">
+        <Field label="AI Provider">
+          <div className="grid grid-cols-2 gap-2">
+            {(Object.keys(PROVIDERS) as ProviderId[]).map((id) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => applyProvider(id)}
+                className={`px-3 py-2 rounded-lg text-sm border transition-colors ${
+                  settings.provider === id
+                    ? "border-glm-accent bg-glm-accent/20 text-white"
+                    : "border-glm-border text-glm-muted hover:text-white"
+                }`}
+              >
+                {PROVIDERS[id].label}
+              </button>
+            ))}
+          </div>
+        </Field>
+
+        <label className="flex items-center gap-2 text-sm cursor-pointer">
+          <input
+            type="checkbox"
+            checked={settings.internetEnabled}
+            onChange={(e) => update("internetEnabled", e.target.checked)}
+            className="rounded border-glm-border"
+          />
+          Enable internet (web search, fetch URLs, cloud APIs)
+        </label>
+
         <Field label="Local server URL" hint="Ollama OpenAI-compatible endpoint (default)">
           <input
             type="text"
@@ -195,6 +237,17 @@ export function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
       </div>
 
       <div className="mt-8 p-4 rounded-xl border border-glm-border bg-glm-card text-sm">
+        <h3 className="font-semibold mb-2">Coding agent tools (like Cursor)</h3>
+        <ul className="text-xs text-glm-muted space-y-1 list-disc pl-4">
+          <li>read_file / write_file / edit_file — file operations</li>
+          <li>search_codebase — regex search across project</li>
+          <li>run_terminal — shell commands in workspace</li>
+          <li>web_search / fetch_url — internet docs lookup</li>
+          <li>git_status / git_diff / git_log — version control</li>
+        </ul>
+      </div>
+
+      <div className="mt-4 p-4 rounded-xl border border-glm-border bg-glm-card text-sm">
         <h3 className="font-semibold mb-2">One-time setup (this PC only)</h3>
         <pre className="text-xs font-mono text-glm-muted overflow-x-auto whitespace-pre-wrap">
 {`# 1. Install Ollama — https://ollama.com

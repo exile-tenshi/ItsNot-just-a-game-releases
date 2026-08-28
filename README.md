@@ -1,103 +1,88 @@
-# GLM-5.1 UI — Local Gaming PC Builder
+# GLM-5.1 UI — Coding Agent (Cursor-like)
 
-Runs **entirely on your PC** — no API keys, no cloud, no usage limits. Built for unlimited gaming PC build planning from budget 1080p rigs to no-compromise 4K enthusiast systems.
+Full coding AI on your PC with **internet access**, **cloud providers**, and every major feature from Cursor, Cline, and Windsurf.
 
-## One command start
+## Quick start
 
 ```bash
-chmod +x start.sh
+chmod +x start.sh && ./start.sh
+```
+
+Open **http://localhost:8000** → **Agent** tab
+
+## Features (Cursor parity)
+
+| Feature | Tool / Tab |
+|---------|----------------|
+| **Agent mode** | Autonomous loop — read, edit, run, iterate |
+| **File operations** | `read_file`, `write_file`, `edit_file` |
+| **Codebase search** | `search_codebase` (regex / ripgrep) |
+| **Terminal** | `run_terminal` — tests, builds, npm, pip |
+| **Web search** | `web_search` — docs, errors, APIs |
+| **Fetch URLs** | `fetch_url` — read docs pages |
+| **Git** | `git_status`, `git_diff`, `git_log` |
+| **@file context** | Attach files from workspace tree |
+| **Streaming** | Live agent + tool progress |
+| **Chat** | General conversation |
+| **PC Builder** | Gaming rig advisor |
+| **Multi-provider** | Local Ollama, Z.AI GLM-5.1, OpenAI, OpenRouter |
+
+Config: `config/coding-agent.json`
+
+## Internet
+
+Internet is **enabled by default** for:
+- Web search and documentation lookup
+- Fetching URLs (GitHub, Stack Overflow, docs)
+- Optional cloud AI providers (Z.AI, OpenAI, OpenRouter)
+
+Local Ollama still works offline for file/terminal/git tools.
+
+## Providers (Settings tab)
+
+| Provider | Base URL | API Key |
+|----------|----------|---------|
+| Local (Ollama) | `http://127.0.0.1:11434/v1` | `local` (none) |
+| Z.AI GLM-5.1 | `https://api.z.ai/api/paas/v4/` | Z.AI key |
+| OpenAI | `https://api.openai.com/v1` | OpenAI key |
+| OpenRouter | `https://openrouter.ai/api/v1` | OpenRouter key |
+
+## Setup
+
+```bash
+# Local model (recommended to start)
+ollama pull llama3.1:8b
+# Or for better agent tool use:
+ollama pull qwen2.5:14b
+
 ./start.sh
 ```
 
-Open **http://localhost:8000**
+For cloud GLM-5.1, add `ZAI_API_KEY` to `.env` and select **Z.AI** in Settings.
 
-Windows: double-click `start.bat` or run it from Command Prompt.
+## Agent API
 
-## One-time setup (this PC only)
-
-1. **Install Ollama** — https://ollama.com
-2. **Pull a model** (any of these work well for PC builds):
-   ```bash
-   ollama pull llama3.1:8b
-   ollama pull qwen2.5:14b
-   ```
-3. **Run the app** — `./start.sh`
-
-That's it. No accounts, no subscriptions, no internet after setup.
-
-## Features
-
-| Tab | What it does |
-|-----|--------------|
-| **Chat** | Unlimited local AI chat |
-| **PC Builder** | Preset builds ($800–$5000) + custom budget/resolution/use-case builder |
-| **Restrictions** | Review allowed/not-allowed policy files |
-| **Test Suite** | Validate restriction guard scenarios |
-| **Settings** | Ollama URL, model, connection test |
-
-## Usage limits
-
-**None.** Local mode disables all artificial caps (`config/local.json`):
-
-- No daily message limit
-- No token quotas
-- No rate limiting
-- Limited only by your CPU/GPU/RAM
-
-## PC Builder presets
-
-| Build | Budget | Target |
-|-------|--------|--------|
-| Solid 1080p Gamer | $800 | 1080p high settings |
-| 1440p High Refresh | $1,400 | 1440p ultra, 100+ FPS |
-| 1440p Enthusiast | $2,200 | Max 1440p |
-| 4K Ultra Gaming | $3,200 | 4K ultra 60–120 FPS |
-| Ultimate 4K / 240Hz | $5,000 | No-compromise flagship |
-| Game + Stream | $2,500 | 1440p play + 1080p stream |
-| VR Ready | $2,000 | PCVR high settings |
-| SFF LAN | $1,800 | Portable ITX build |
-
-Config: `config/pc-builder-presets.json`
+```bash
+curl -N -X POST http://localhost:8000/api/agent/run \
+  -H "Content-Type: application/json" \
+  -d '{"message": "List all Python files and run tests"}'
+```
 
 ## Project structure
 
 ```
-├── start.sh / start.bat     # Single-process launcher
-├── config/
-│   ├── local.json           # Local-only, unlimited usage config
-│   ├── pc-builder-presets.json
-│   └── restrictions-test.json
-├── restrictions/            # Policy review files
-├── backend/                 # FastAPI + OpenAI SDK → Ollama
-└── frontend/                # React UI (served from :8000)
+├── config/coding-agent.json   # All Cursor-like features + tools
+├── config/local.json         # Internet + unlimited usage
+├── backend/agent.py            # Agent loop
+├── backend/tools.py            # Tool definitions
+├── backend/workspace.py        # Sandboxed file ops
+├── backend/web_search.py       # Internet search
+└── frontend/.../AgentPanel.tsx # IDE-style agent UI
 ```
 
-## Optional cloud fallback
+## Usage limits
 
-Cloud is **not required**. To use Z.AI instead of Ollama, set in `.env`:
-
-```
-LOCAL_MODE=false
-ZAI_API_KEY=your-key
-INFERENCE_BASE_URL=https://api.z.ai/api/paas/v4/
-GLM_MODEL=glm-5.1
-```
-
-## SDK (local)
-
-```python
-from openai import OpenAI
-
-client = OpenAI(
-    api_key="local",
-    base_url="http://127.0.0.1:11434/v1",
-)
-
-response = client.chat.completions.create(
-    model="llama3.1:8b",
-    messages=[{"role": "user", "content": "Design a $2000 gaming PC"}],
-)
-```
+No artificial caps locally. Cloud providers use their own quotas.
 
 ## License
 

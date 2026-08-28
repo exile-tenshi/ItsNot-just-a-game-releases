@@ -12,16 +12,19 @@ from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
+from agent import load_agent_config, run_agent
 from config import ROOT_DIR, settings
 from local_engine import get_local_status, load_local_config
 from openai_client import chat_completion, create_openai_client, iter_stream_chunks, resolve_model
 from pc_builder import PC_BUILDER_SYSTEM_PROMPT, build_custom_prompt, load_presets
 from restriction_guard import RestrictionGuard
+from tools import execute_tool, get_tool_schemas
+from workspace import get_workspace_root, list_tree, read_file, set_workspace_root, write_file
 
 app = FastAPI(
     title="GLM-5.1 UI",
-    description="Local-first chat UI — runs on your PC via Ollama (OpenAI SDK compatible)",
-    version="2.0.0",
+    description="Coding agent UI — Cursor-like tools, local + internet",
+    version="3.0.0",
 )
 
 app.add_middleware(
@@ -78,6 +81,30 @@ class PCBuildRequest(BaseModel):
     model: str | None = None
 
 
+class AgentRequest(BaseModel):
+    message: str
+    context_files: list[str] = Field(default_factory=list)
+    temperature: float = 0.3
+    api_key: str | None = None
+    base_url: str | None = None
+    model: str | None = None
+    max_iterations: int | None = None
+
+
+class WorkspaceWriteRequest(BaseModel):
+    path: str
+    content: str
+
+
+class WorkspaceRootRequest(BaseModel):
+    path: str
+
+
+class ToolRunRequest(BaseModel):
+    name: str
+    arguments: dict[str, Any] = Field(default_factory=dict)
+
+
 @app.get("/api/health")
 def health() -> dict[str, Any]:
     status = get_local_status()
@@ -102,10 +129,98 @@ def get_config() -> dict[str, Any]:
         "guard_mode": guard.mode,
         "requires_api_key": local_cfg.get("requires_api_key", False),
         "requires_internet": local_cfg.get("requires_internet", False),
+        "internet_enabled": settings.internet_enabled,
+        "internet": local_cfg.get("internet", {}),
         "usage_limits": local_cfg.get("usage_limits", {}),
+        "workspace_root": str(get_workspace_root()),
         "ready": status["ready"],
         "setup_hint": status.get("setup_hint"),
     }
+
+
+@app.get("/api/agent/config")
+def agent_config() -> dict[str, Any]:
+    cfg = load_agent_config()
+    return {
+        "features": cfg.get("features", {}),
+        "tools": cfg.get("tools", []),
+        "providers": cfg.get("providers", {}),
+        "internet": cfg.get("internet", {}),
+    }
+
+
+@app.get("/api/agent/tools")
+def agent_tools() -> list[dict[str, Any]]:
+    return get_tool_schemas()
+
+
+@app.post("/api/agent/run")
+def agent_run(body: AgentRequest) -> StreamingResponse:
+    def event_generator():
+        try:
+            for event in run_agent(
+                body.message,
+                context_files=body.context_files,
+                model=body.model,
+                api_key=body.api_key,
+                base_url=body.base_url,
+                temperature=body.temperature,
+                max_iterations=body.max_iterations,
+            ):
+                yield f"data: {json.dumps(event)}\n\n"
+            yield "data: [DONE]\n\n"
+        except Exception as exc:
+            yield f"data: {json.dumps({'type': 'error', 'message': str(exc)})}\n\n"
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
+
+
+@app.get("/api/workspace/root")
+def workspace_root() -> dict[str, str]:
+    return {"root": str(get_workspace_root())}
+
+
+@app.post("/api/workspace/root")
+def set_workspace_root_endpoint(body: WorkspaceRootRequest) -> dict[str, str]:
+    try:
+        root = set_workspace_root(body.path)
+        return {"root": str(root)}
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.get("/api/workspace/tree")
+def workspace_tree(path: str = ".") -> dict[str, Any]:
+    try:
+        return {"path": path, "entries": list_tree(path)}
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.get("/api/workspace/file")
+def workspace_read_file(path: str, offset: int = 1, limit: int = 500) -> dict[str, Any]:
+    try:
+        return read_file(path, offset, limit)
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.post("/api/workspace/file")
+def workspace_write_file(body: WorkspaceWriteRequest) -> dict[str, Any]:
+    try:
+        return write_file(body.path, body.content)
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.post("/api/tools/run")
+def run_tool(body: ToolRunRequest) -> dict[str, str]:
+    result = execute_tool(body.name, body.arguments)
+    return {"name": body.name, "result": result}
 
 
 @app.get("/api/local/status")

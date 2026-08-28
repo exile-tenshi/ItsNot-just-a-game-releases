@@ -56,6 +56,18 @@
       ]
     },
     {
+      "id": "coding-agent",
+      "label": "Coding agent (Cursor parity)",
+      "description": "Autonomous agent with file edit, terminal, codebase search, git, and web tools",
+      "examples": [
+        "Fix TypeScript errors across the project",
+        "Run tests and apply patches until green",
+        "Search the web for API documentation",
+        "Git status, diff, and commit message suggestions"
+      ],
+      "config": "config/coding-agent.json"
+    },
+    {
       "id": "gaming-pc-builds",
       "label": "Gaming PC build planning",
       "description": "Hardware recommendations, part lists, compatibility, FPS estimates, and upgrade paths for gaming PCs",

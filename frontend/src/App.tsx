@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { AgentPanel } from "./components/AgentPanel";
 import { Header } from "./components/Header";
 import { ChatPanel } from "./components/ChatPanel";
 import { RestrictionsPanel } from "./components/RestrictionsPanel";
@@ -21,7 +22,7 @@ function loadSettings(): AppSettings {
 }
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<TabId>("chat");
+  const [activeTab, setActiveTab] = useState<TabId>("agent");
   const [settings, setSettings] = useState<AppSettings>(loadSettings);
 
   const handleSettingsChange = (next: AppSettings) => {
@@ -33,6 +34,7 @@ export default function App() {
     <div className="min-h-screen bg-glm-bg">
       <Header activeTab={activeTab} onTabChange={setActiveTab} />
       <main>
+        {activeTab === "agent" && <AgentPanel settings={settings} />}
         {activeTab === "chat" && <ChatPanel settings={settings} />}
         {activeTab === "pcbuilder" && <PCBuilderPanel settings={settings} />}
         {activeTab === "restrictions" && <RestrictionsPanel />}
