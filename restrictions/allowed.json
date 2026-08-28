@@ -56,19 +56,42 @@
       ]
     },
     {
-      "id": "openai-compatible-api",
-      "label": "OpenAI-compatible API usage",
-      "description": "Chat completions, streaming, function calling via official OpenAI SDK",
+      "id": "gaming-pc-builds",
+      "label": "Gaming PC build planning",
+      "description": "Hardware recommendations, part lists, compatibility, FPS estimates, and upgrade paths for gaming PCs",
       "examples": [
-        "Stream a chat completion with glm-5.1",
-        "Call get_weather via function calling",
-        "Use thinking mode with extra_body.thinking"
+        "Design a $2000 1440p ultra gaming PC with full parts list",
+        "Best GPU for 4K 120Hz gaming in 2026",
+        "Compare RTX vs AMD for competitive FPS at 1080p 360Hz",
+        "Upgrade path from RTX 3070 — keep CPU or rebuild?",
+        "ITX LAN party build under $1500 with thermals analysis"
+      ]
+    },
+    {
+      "id": "local-unlimited-usage",
+      "label": "Local unlimited usage",
+      "description": "All features on this PC with no API keys, cloud quotas, or rate limits",
+      "examples": [
+        "Run unlimited PC build consultations locally",
+        "Chat and PC builder with no daily message cap",
+        "Ollama inference on localhost:11434"
+      ],
+      "config": "config/local.json"
+    },
+    {
+      "id": "openai-compatible-api",
+      "label": "OpenAI-compatible local API",
+      "description": "Chat completions and streaming via official OpenAI SDK against local Ollama",
+      "examples": [
+        "Stream a chat completion locally",
+        "PC builder via /api/pc-builder/build/stream",
+        "Unlimited local inference on this PC"
       ],
       "sdk": {
         "package": "openai",
         "min_version": "1.0.0",
-        "base_url": "https://api.z.ai/api/paas/v4/",
-        "model": "glm-5.1"
+        "base_url": "http://127.0.0.1:11434/v1",
+        "model": "llama3.1:8b"
       }
     },
     {

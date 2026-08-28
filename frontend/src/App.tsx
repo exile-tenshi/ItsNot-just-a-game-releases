@@ -4,6 +4,7 @@ import { ChatPanel } from "./components/ChatPanel";
 import { RestrictionsPanel } from "./components/RestrictionsPanel";
 import { TestSuitePanel } from "./components/TestSuitePanel";
 import { SettingsPanel } from "./components/SettingsPanel";
+import { PCBuilderPanel } from "./components/PCBuilderPanel";
 import type { AppSettings, TabId } from "./types";
 import { DEFAULT_SETTINGS } from "./types";
 
@@ -33,6 +34,7 @@ export default function App() {
       <Header activeTab={activeTab} onTabChange={setActiveTab} />
       <main>
         {activeTab === "chat" && <ChatPanel settings={settings} />}
+        {activeTab === "pcbuilder" && <PCBuilderPanel settings={settings} />}
         {activeTab === "restrictions" && <RestrictionsPanel />}
         {activeTab === "tests" && <TestSuitePanel />}
         {activeTab === "settings" && (

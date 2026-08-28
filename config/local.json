@@ -1,0 +1,38 @@
+{
+  "version": "1.0.0",
+  "mode": "local",
+  "description": "Local-only configuration — runs entirely on your PC with no cloud API keys or usage caps",
+  "requires_api_key": false,
+  "requires_internet": false,
+  "inference": {
+    "provider": "ollama",
+    "base_url": "http://127.0.0.1:11434/v1",
+    "api_key": "local",
+    "preferred_models": [
+      "glm-5.1",
+      "glm4",
+      "qwen2.5:14b",
+      "qwen2.5:7b",
+      "llama3.1:8b",
+      "mistral",
+      "phi3"
+    ],
+    "fallback_model": "llama3.1:8b",
+    "auto_detect_model": true
+  },
+  "usage_limits": {
+    "enabled": false,
+    "max_requests_per_minute": 999999,
+    "max_requests_per_hour": 9999999,
+    "max_tokens_per_request": 131072,
+    "max_concurrent_streams": 32,
+    "daily_message_cap": null,
+    "note": "Local mode has no artificial caps — limited only by your CPU/GPU/RAM"
+  },
+  "restriction_guard": {
+    "default_mode": "disabled",
+    "note": "Cloud subscription rules do not apply to local inference; safety guard can be re-enabled in Settings"
+  },
+  "serve_ui_from_backend": true,
+  "default_port": 8000
+}

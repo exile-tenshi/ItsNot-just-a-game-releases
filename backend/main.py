@@ -1,4 +1,4 @@
-"""GLM-5.1 UI API — OpenAI SDK backend with restriction guard."""
+"""GLM-5.1 UI API — local-first OpenAI SDK backend."""
 
 from __future__ import annotations
 
@@ -8,22 +8,25 @@ from typing import Any
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
+from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from config import settings
-from openai_client import chat_completion, create_openai_client, iter_stream_chunks
+from config import ROOT_DIR, settings
+from local_engine import get_local_status, load_local_config
+from openai_client import chat_completion, create_openai_client, iter_stream_chunks, resolve_model
+from pc_builder import PC_BUILDER_SYSTEM_PROMPT, build_custom_prompt, load_presets
 from restriction_guard import RestrictionGuard
 
 app = FastAPI(
     title="GLM-5.1 UI",
-    description="Chat UI for GLM-5.1 via official OpenAI Python SDK (Z.AI-compatible)",
-    version="1.0.0",
+    description="Local-first chat UI — runs on your PC via Ollama (OpenAI SDK compatible)",
+    version="2.0.0",
 )
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origin_list,
+    allow_origins=settings.cors_origin_list + ["*"] if settings.local_mode else settings.cors_origin_list,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -33,6 +36,8 @@ guard = RestrictionGuard(
     restrictions_dir=settings.restrictions_dir,
     mode=settings.restriction_guard_mode,
 )
+
+FRONTEND_DIST = ROOT_DIR / "frontend" / "dist"
 
 
 class Message(BaseModel):
@@ -60,20 +65,158 @@ class TestRunRequest(BaseModel):
     config_path: str | None = None
 
 
+class PCBuildRequest(BaseModel):
+    budget_usd: int | None = Field(default=None, ge=300, le=50000)
+    resolution: str = "1440p"
+    use_case: str = "aaa-gaming"
+    extras: str = ""
+    preset_id: str | None = None
+    stream: bool = True
+    temperature: float = 0.7
+    api_key: str | None = None
+    base_url: str | None = None
+    model: str | None = None
+
+
 @app.get("/api/health")
-def health() -> dict[str, str]:
-    return {"status": "ok", "model": settings.glm_model}
+def health() -> dict[str, Any]:
+    status = get_local_status()
+    return {
+        "status": "ok",
+        "local_mode": settings.local_mode,
+        "model": status["inference"]["active_model"],
+        "ready": status["ready"],
+    }
 
 
 @app.get("/api/config")
 def get_config() -> dict[str, Any]:
+    status = get_local_status()
+    local_cfg = load_local_config()
     return {
-        "model": settings.glm_model,
-        "base_url": settings.zai_base_url,
+        "local_mode": settings.local_mode,
+        "model": status["inference"]["active_model"],
+        "configured_model": settings.glm_model,
+        "base_url": status["inference"]["base_url"],
         "sdk": "openai>=1.0.0",
         "guard_mode": guard.mode,
-        "has_api_key": bool(settings.zai_api_key),
+        "requires_api_key": local_cfg.get("requires_api_key", False),
+        "requires_internet": local_cfg.get("requires_internet", False),
+        "usage_limits": local_cfg.get("usage_limits", {}),
+        "ready": status["ready"],
+        "setup_hint": status.get("setup_hint"),
     }
+
+
+@app.get("/api/local/status")
+def local_status() -> dict[str, Any]:
+    return get_local_status()
+
+
+@app.get("/api/pc-builder/presets")
+def pc_builder_presets() -> dict[str, Any]:
+    return load_presets()
+
+
+@app.post("/api/pc-builder/build")
+def pc_builder_build(body: PCBuildRequest) -> dict[str, Any]:
+    presets = load_presets()
+    prompt = body.extras
+
+    if body.preset_id:
+        preset = next((b for b in presets["builds"] if b["id"] == body.preset_id), None)
+        if not preset:
+            raise HTTPException(status_code=404, detail="Preset not found")
+        prompt = preset["prompt"]
+        if body.extras.strip():
+            prompt += f"\n\nAdditional notes: {body.extras.strip()}"
+    elif not prompt.strip():
+        use_case_label = next(
+            (u["label"] for u in presets["use_cases"] if u["id"] == body.use_case),
+            body.use_case,
+        )
+        prompt = build_custom_prompt(body.budget_usd, body.resolution, use_case_label, body.extras)
+
+    messages = [
+        {"role": "system", "content": PC_BUILDER_SYSTEM_PROMPT},
+        {"role": "user", "content": prompt},
+    ]
+
+    if body.stream:
+        raise HTTPException(status_code=400, detail="Use /api/pc-builder/build/stream for streaming")
+
+    try:
+        response = chat_completion(
+            messages,
+            model=body.model,
+            temperature=body.temperature,
+            max_tokens=8192,
+            stream=False,
+            api_key=body.api_key,
+            base_url=body.base_url,
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+    choice = response.choices[0]
+    return {
+        "content": choice.message.content or "",
+        "model": response.model,
+        "prompt_used": prompt,
+    }
+
+
+@app.post("/api/pc-builder/build/stream")
+def pc_builder_build_stream(body: PCBuildRequest) -> StreamingResponse:
+    presets = load_presets()
+    prompt = body.extras
+
+    if body.preset_id:
+        preset = next((b for b in presets["builds"] if b["id"] == body.preset_id), None)
+        if not preset:
+            raise HTTPException(status_code=404, detail="Preset not found")
+        prompt = preset["prompt"]
+        if body.extras.strip():
+            prompt += f"\n\nAdditional notes: {body.extras.strip()}"
+    elif not prompt.strip():
+        use_case_label = next(
+            (u["label"] for u in presets["use_cases"] if u["id"] == body.use_case),
+            body.use_case,
+        )
+        prompt = build_custom_prompt(body.budget_usd, body.resolution, use_case_label, body.extras)
+
+    messages = [
+        {"role": "system", "content": PC_BUILDER_SYSTEM_PROMPT},
+        {"role": "user", "content": prompt},
+    ]
+
+    try:
+        stream = chat_completion(
+            messages,
+            model=body.model,
+            temperature=body.temperature,
+            max_tokens=8192,
+            stream=True,
+            api_key=body.api_key,
+            base_url=body.base_url,
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+    def event_generator():
+        try:
+            yield f"data: {json.dumps({'prompt': prompt})}\n\n"
+            for chunk in iter_stream_chunks(stream):
+                yield f"data: {json.dumps({'content': chunk})}\n\n"
+            yield "data: [DONE]\n\n"
+        except Exception as exc:
+            yield f"data: {json.dumps({'error': str(exc)})}\n\n"
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
 
 
 @app.get("/api/restrictions")
@@ -120,14 +263,14 @@ def chat(body: ChatRequest) -> dict[str, Any]:
         raise HTTPException(status_code=400, detail="At least one user message is required")
 
     last_user = user_messages[-1].content
-    if not body.skip_guard:
+    if not body.skip_guard and guard.mode != "disabled":
         guard_result = guard.check(last_user)
         if not guard_result.allowed:
             raise HTTPException(
                 status_code=400,
                 detail={
                     "error": "restriction_violation",
-                    "message": "Prompt blocked by local restriction guard (Z.AI policy categories).",
+                    "message": "Prompt blocked by local restriction guard.",
                     "violations": [
                         {
                             "category_id": v.category_id,
@@ -137,17 +280,13 @@ def chat(body: ChatRequest) -> dict[str, Any]:
                         }
                         for v in guard_result.violations
                     ],
-                    "api_error_reference": "1301 — server may also reject unsafe content",
                 },
             )
 
     messages_payload = [{"role": m.role, "content": m.content} for m in body.messages]
 
     if body.stream:
-        raise HTTPException(
-            status_code=400,
-            detail="Use /api/chat/stream for streaming requests",
-        )
+        raise HTTPException(status_code=400, detail="Use /api/chat/stream for streaming requests")
 
     try:
         response = chat_completion(
@@ -160,20 +299,8 @@ def chat(body: ChatRequest) -> dict[str, Any]:
             api_key=body.api_key,
             base_url=body.base_url,
         )
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
-        error_msg = str(exc)
-        if "1301" in error_msg or "unsafe" in error_msg.lower():
-            raise HTTPException(
-                status_code=400,
-                detail={
-                    "error": "api_content_policy",
-                    "message": "Z.AI API rejected content (error 1301 — unsafe/sensitive content).",
-                    "detail": error_msg,
-                },
-            ) from exc
-        raise HTTPException(status_code=502, detail=error_msg) from exc
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
 
     choice = response.choices[0]
     return {
@@ -197,7 +324,7 @@ def chat_stream(body: ChatRequest) -> StreamingResponse:
         raise HTTPException(status_code=400, detail="At least one user message is required")
 
     last_user = user_messages[-1].content
-    if not body.skip_guard:
+    if not body.skip_guard and guard.mode != "disabled":
         guard_result = guard.check(last_user)
         if not guard_result.allowed:
             raise HTTPException(
@@ -221,8 +348,6 @@ def chat_stream(body: ChatRequest) -> StreamingResponse:
             api_key=body.api_key,
             base_url=body.base_url,
         )
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
 
@@ -312,16 +437,15 @@ def run_restriction_tests(body: TestRunRequest | None = None) -> dict[str, Any]:
 
 
 @app.post("/api/verify-key")
-def verify_api_key(body: dict[str, str]) -> dict[str, Any]:
-    api_key = body.get("api_key") or settings.zai_api_key
-    base_url = body.get("base_url") or settings.zai_base_url
-    if not api_key:
-        raise HTTPException(status_code=400, detail="API key required")
+def verify_connection(body: dict[str, str]) -> dict[str, Any]:
+    base_url = body.get("base_url") or settings.inference_base_url
+    api_key = body.get("api_key")
 
     try:
         client = create_openai_client(api_key=api_key, base_url=base_url)
+        model = resolve_model(body.get("model"), base_url)
         response = client.chat.completions.create(
-            model=settings.glm_model,
+            model=model,
             messages=[{"role": "user", "content": "Reply with exactly: OK"}],
             max_tokens=10,
         )
@@ -329,12 +453,33 @@ def verify_api_key(body: dict[str, str]) -> dict[str, Any]:
             "valid": True,
             "model": response.model,
             "sample": (response.choices[0].message.content or "")[:100],
+            "local": settings.local_mode,
         }
     except Exception as exc:
         return {"valid": False, "error": str(exc)}
 
 
+# Serve built frontend from single process (local-only, no separate dev server needed)
+if settings.serve_ui and FRONTEND_DIST.is_dir():
+    assets_dir = FRONTEND_DIST / "assets"
+    if assets_dir.is_dir():
+        app.mount("/assets", StaticFiles(directory=str(assets_dir)), name="assets")
+
+    @app.get("/")
+    async def serve_index():
+        return FileResponse(FRONTEND_DIST / "index.html")
+
+    @app.get("/{full_path:path}")
+    async def serve_spa(full_path: str):
+        if full_path.startswith("api/"):
+            raise HTTPException(status_code=404)
+        file_path = FRONTEND_DIST / full_path
+        if file_path.is_file():
+            return FileResponse(file_path)
+        return FileResponse(FRONTEND_DIST / "index.html")
+
+
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run("main:app", host=settings.host, port=settings.port, reload=True)
+    uvicorn.run("main:app", host=settings.host, port=settings.port, reload=False)

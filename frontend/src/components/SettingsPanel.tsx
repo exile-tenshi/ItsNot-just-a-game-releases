@@ -1,5 +1,5 @@
-import { useState, type ReactNode } from "react";
-import type { AppSettings } from "../types";
+import { useEffect, useState, type ReactNode } from "react";
+import type { AppSettings, LocalStatus } from "../types";
 import { DEFAULT_SETTINGS, apiFetch } from "../types";
 
 interface SettingsPanelProps {
@@ -10,12 +10,17 @@ interface SettingsPanelProps {
 export function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
   const [verifyStatus, setVerifyStatus] = useState<string | null>(null);
   const [verifying, setVerifying] = useState(false);
+  const [localStatus, setLocalStatus] = useState<LocalStatus | null>(null);
+
+  useEffect(() => {
+    apiFetch<LocalStatus>("/api/local/status").then(setLocalStatus).catch(() => {});
+  }, [verifyStatus]);
 
   const update = <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => {
     onChange({ ...settings, [key]: value });
   };
 
-  const verifyKey = async () => {
+  const verifyConnection = async () => {
     setVerifying(true);
     setVerifyStatus(null);
     try {
@@ -25,56 +30,101 @@ export function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            api_key: settings.apiKey,
+            api_key: settings.apiKey || "local",
             base_url: settings.baseUrl,
+            model: settings.model,
           }),
         },
       );
       if (result.valid) {
-        setVerifyStatus(`✓ Valid — sample: ${result.sample || "OK"}`);
+        setVerifyStatus(`Connected — model responded: ${result.sample || "OK"}`);
       } else {
-        setVerifyStatus(`✗ ${result.error || "Invalid key"}`);
+        setVerifyStatus(`Not connected: ${result.error || "unknown error"}`);
       }
     } catch (e) {
-      setVerifyStatus(`✗ ${e instanceof Error ? e.message : String(e)}`);
+      setVerifyStatus(`Not connected: ${e instanceof Error ? e.message : String(e)}`);
     } finally {
       setVerifying(false);
     }
+  };
+
+  const applyDetectedModel = () => {
+    const active = localStatus?.inference.active_model;
+    if (active) onChange({ ...settings, model: active });
   };
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6">
       <h2 className="text-2xl font-semibold mb-2">Settings</h2>
       <p className="text-glm-muted text-sm mb-6">
-        Configure the official OpenAI SDK connection to Z.AI for GLM-5.1.
+        Runs locally on your PC via Ollama — no API key or internet required. Unlimited usage.
       </p>
 
-      <div className="space-y-5">
-        <Field label="API Key" hint="From https://z.ai/manage-apikey/apikey-list">
-          <input
-            type="password"
-            value={settings.apiKey}
-            onChange={(e) => update("apiKey", e.target.value)}
-            placeholder="Z.AI API key"
-            className="w-full rounded-xl bg-glm-bg border border-glm-border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-glm-accent/50"
-          />
-        </Field>
+      {localStatus && (
+        <div
+          className={`mb-6 p-4 rounded-xl border ${
+            localStatus.ready
+              ? "border-glm-success/40 bg-glm-success/5"
+              : "border-glm-warn/40 bg-glm-warn/5"
+          }`}
+        >
+          <p className="font-semibold text-sm mb-1">
+            {localStatus.ready ? "Local inference ready" : "Ollama not detected"}
+          </p>
+          {localStatus.ready ? (
+            <p className="text-xs text-glm-muted">
+              Models: {localStatus.inference.ollama.models.slice(0, 5).join(", ") || "none"}
+              {localStatus.inference.ollama.models.length > 5 ? "…" : ""}
+            </p>
+          ) : (
+            <p className="text-xs text-glm-muted">
+              {localStatus.setup_hint ||
+                "Install Ollama from ollama.com, then run: ollama pull llama3.1:8b"}
+            </p>
+          )}
+          {localStatus.usage_limits?.note && (
+            <p className="text-xs text-glm-accent2 mt-2">{localStatus.usage_limits.note}</p>
+          )}
+        </div>
+      )}
 
-        <Field label="Base URL" hint="Official Z.AI OpenAI-compatible endpoint">
+      <div className="space-y-5">
+        <Field label="Local server URL" hint="Ollama OpenAI-compatible endpoint (default)">
           <input
             type="text"
             value={settings.baseUrl}
             onChange={(e) => update("baseUrl", e.target.value)}
-            className="w-full rounded-xl bg-glm-bg border border-glm-border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-glm-accent/50 font-mono text-sm"
+            className="w-full rounded-xl bg-glm-bg border border-glm-border px-4 py-2.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-glm-accent/50"
           />
         </Field>
 
-        <Field label="Model">
+        <Field label="Model" hint="Any model installed in Ollama on this PC">
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={settings.model}
+              onChange={(e) => update("model", e.target.value)}
+              className="flex-1 rounded-xl bg-glm-bg border border-glm-border px-4 py-2.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-glm-accent/50"
+            />
+            {localStatus?.inference.active_model && (
+              <button
+                type="button"
+                onClick={applyDetectedModel}
+                className="px-3 py-2 rounded-lg border border-glm-border text-xs hover:bg-glm-card"
+              >
+                Use detected
+              </button>
+            )}
+          </div>
+        </Field>
+
+        <Field label="API key" hint="Not required for local Ollama — leave as 'local'">
           <input
             type="text"
-            value={settings.model}
-            onChange={(e) => update("model", e.target.value)}
-            className="w-full rounded-xl bg-glm-bg border border-glm-border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-glm-accent/50 font-mono text-sm"
+            value={settings.apiKey}
+            onChange={(e) => update("apiKey", e.target.value)}
+            placeholder="local"
+            className="w-full rounded-xl bg-glm-bg border border-glm-border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-glm-accent/50"
           />
         </Field>
 
@@ -105,10 +155,7 @@ export function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
               type="number"
               value={settings.maxTokens ?? ""}
               onChange={(e) =>
-                update(
-                  "maxTokens",
-                  e.target.value ? parseInt(e.target.value, 10) : null,
-                )
+                update("maxTokens", e.target.value ? parseInt(e.target.value, 10) : null)
               }
               placeholder="No limit"
               className="w-full rounded-xl bg-glm-bg border border-glm-border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-glm-accent/50"
@@ -116,79 +163,56 @@ export function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
           </Field>
         </div>
 
-        <div className="flex flex-wrap gap-4">
-          <label className="flex items-center gap-2 text-sm cursor-pointer">
-            <input
-              type="checkbox"
-              checked={settings.stream}
-              onChange={(e) => update("stream", e.target.checked)}
-              className="rounded border-glm-border"
-            />
-            Stream responses
-          </label>
-          <label className="flex items-center gap-2 text-sm cursor-pointer">
-            <input
-              type="checkbox"
-              checked={settings.thinkingEnabled}
-              onChange={(e) => update("thinkingEnabled", e.target.checked)}
-              className="rounded border-glm-border"
-            />
-            Thinking mode
-          </label>
-        </div>
+        <label className="flex items-center gap-2 text-sm cursor-pointer">
+          <input
+            type="checkbox"
+            checked={settings.stream}
+            onChange={(e) => update("stream", e.target.checked)}
+            className="rounded border-glm-border"
+          />
+          Stream responses
+        </label>
 
         <div className="flex gap-3 pt-2">
           <button
             type="button"
-            onClick={verifyKey}
-            disabled={verifying || !settings.apiKey}
+            onClick={verifyConnection}
+            disabled={verifying}
             className="px-4 py-2 rounded-lg border border-glm-border text-sm hover:bg-glm-card transition-colors disabled:opacity-50"
           >
-            {verifying ? "Verifying…" : "Verify API Key"}
+            {verifying ? "Checking…" : "Test local connection"}
           </button>
           <button
             type="button"
-            onClick={() => onChange({ ...DEFAULT_SETTINGS, apiKey: settings.apiKey })}
+            onClick={() => onChange({ ...DEFAULT_SETTINGS })}
             className="px-4 py-2 rounded-lg border border-glm-border text-sm text-glm-muted hover:text-white transition-colors"
           >
             Reset defaults
           </button>
         </div>
 
-        {verifyStatus && (
-          <p className="text-sm font-mono text-glm-muted">{verifyStatus}</p>
-        )}
+        {verifyStatus && <p className="text-sm font-mono text-glm-muted">{verifyStatus}</p>}
       </div>
 
       <div className="mt-8 p-4 rounded-xl border border-glm-border bg-glm-card text-sm">
-        <h3 className="font-semibold mb-2">SDK reference</h3>
-        <pre className="text-xs font-mono text-glm-muted overflow-x-auto">
-{`from openai import OpenAI
+        <h3 className="font-semibold mb-2">One-time setup (this PC only)</h3>
+        <pre className="text-xs font-mono text-glm-muted overflow-x-auto whitespace-pre-wrap">
+{`# 1. Install Ollama — https://ollama.com
+# 2. Pull a model (pick one):
+ollama pull llama3.1:8b
+ollama pull qwen2.5:14b
 
-client = OpenAI(
-    api_key="your-Z.AI-api-key",
-    base_url="https://api.z.ai/api/paas/v4/"
-)
+# 3. Start this app:
+./start.sh
 
-response = client.chat.completions.create(
-    model="glm-5.1",
-    messages=[{"role": "user", "content": "Hello"}]
-)`}
+# Open http://localhost:8000 — unlimited local usage`}
         </pre>
       </div>
     </div>
   );
 }
 
-function Field({
-  label,
-  hint,
-  children,
-}: {
-  label: string;
-  hint?: string;
-  children: ReactNode;
-}) {
+function Field({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
   return (
     <div>
       <label className="block text-sm font-medium mb-1">{label}</label>

@@ -1,4 +1,4 @@
-"""GLM-5.1 client using the official OpenAI Python SDK (Z.AI-compatible)."""
+"""OpenAI SDK client — local Ollama first, optional cloud fallback."""
 
 from __future__ import annotations
 
@@ -7,19 +7,28 @@ from typing import Any, AsyncIterator, Iterator
 from openai import OpenAI
 
 from config import settings
+from local_engine import pick_best_model, resolve_api_key, resolve_base_url
 
 
 def create_openai_client(api_key: str | None = None, base_url: str | None = None) -> OpenAI:
-    """Create an OpenAI client configured for Z.AI's GLM-5.1 endpoint."""
-    key = api_key or settings.zai_api_key
-    if not key:
-        raise ValueError(
-            "ZAI_API_KEY is not set. Add it to .env or pass api_key in the request."
-        )
-    return OpenAI(
-        api_key=key,
-        base_url=base_url or settings.zai_base_url,
-    )
+    """Create OpenAI client for local or remote OpenAI-compatible servers."""
+    url = resolve_base_url(base_url)
+    key = resolve_api_key(api_key, url)
+    return OpenAI(api_key=key, base_url=url)
+
+
+def resolve_model(model: str | None, base_url: str | None = None) -> str:
+    if model:
+        return model
+    if settings.local_mode:
+        from local_engine import detect_ollama
+
+        status = detect_ollama(base_url)
+        if status["reachable"] and status["models"]:
+            picked = pick_best_model(status["models"])
+            if picked:
+                return picked
+    return settings.glm_model
 
 
 def chat_completion(
@@ -36,7 +45,7 @@ def chat_completion(
 ) -> Any:
     """Non-streaming or streaming chat completion via official OpenAI SDK."""
     client = create_openai_client(api_key=api_key, base_url=base_url)
-    model_name = model or settings.glm_model
+    model_name = resolve_model(model, base_url)
 
     extra_body: dict[str, Any] = {}
     if thinking_enabled:

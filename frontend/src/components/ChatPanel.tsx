@@ -140,18 +140,16 @@ export function ChatPanel({ settings }: ChatPanelProps) {
             <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-glm-card border border-glm-border flex items-center justify-center text-2xl">
               🤖
             </div>
-            <h2 className="text-xl font-semibold mb-2">Chat with GLM-5.1</h2>
+            <h2 className="text-xl font-semibold mb-2">Local AI — unlimited usage</h2>
             <p className="text-glm-muted text-sm max-w-md mx-auto">
-              Uses the official <code className="text-glm-accent2">openai</code> Python SDK
-              against Z.AI&apos;s OpenAI-compatible endpoint. Prompts are checked against{" "}
-              <code className="text-glm-accent2">restrictions/not-allowed.json</code> before
-              sending.
+              Runs entirely on your PC via Ollama. No API keys, no cloud, no usage caps. Use Chat
+              for anything or the PC Builder tab for gaming rig recommendations.
             </p>
             <div className="mt-6 flex flex-wrap justify-center gap-2">
               {[
-                "Write a Python quicksort implementation",
-                "Explain async/await in JavaScript",
-                "Create a Dockerfile for Node.js 20",
+                "Best GPU for 1440p 240Hz under $600",
+                "Compare Intel vs AMD for gaming in 2026",
+                "How much RAM for AAA gaming?",
               ].map((suggestion) => (
                 <button
                   key={suggestion}
@@ -243,7 +241,7 @@ export function ChatPanel({ settings }: ChatPanelProps) {
           </button>
         </div>
         <p className="text-xs text-glm-muted mt-2 text-center">
-          Restriction guard active · See Restrictions tab for policy review
+          Local mode — unlimited messages · No internet required
         </p>
       </div>
     </div>

@@ -4,6 +4,7 @@ import { apiFetch } from "../types";
 
 const NAV: { id: TabId; label: string; icon: string }[] = [
   { id: "chat", label: "Chat", icon: "💬" },
+  { id: "pcbuilder", label: "PC Builder", icon: "🖥️" },
   { id: "restrictions", label: "Restrictions", icon: "📋" },
   { id: "tests", label: "Test Suite", icon: "🧪" },
   { id: "settings", label: "Settings", icon: "⚙️" },
@@ -15,14 +16,16 @@ interface HeaderProps {
 }
 
 export function Header({ activeTab, onTabChange }: HeaderProps) {
-  const [model, setModel] = useState("glm-5.1");
-  const [guardMode, setGuardMode] = useState("enforce");
+  const [model, setModel] = useState("local");
+  const [localReady, setLocalReady] = useState(false);
 
   useEffect(() => {
-    apiFetch<{ model: string; guard_mode: string }>("/api/config")
+    apiFetch<{ model: string; guard_mode: string; ready?: boolean; local_mode?: boolean }>(
+      "/api/config",
+    )
       .then((c) => {
         setModel(c.model);
-        setGuardMode(c.guard_mode);
+        setLocalReady(c.ready ?? false);
       })
       .catch(() => {});
   }, []);
@@ -39,7 +42,7 @@ export function Header({ activeTab, onTabChange }: HeaderProps) {
               GLM-5.1 UI
             </h1>
             <p className="text-xs text-glm-muted truncate">
-              OpenAI SDK · {model} · guard: {guardMode}
+              Local · {model} · {localReady ? "ready" : "needs Ollama"}
             </p>
           </div>
         </div>

@@ -1,106 +1,104 @@
-# GLM-5.1 UI
+# GLM-5.1 UI — Local Gaming PC Builder
 
-A full chat interface for **GLM-5.1** using Z.AI's **OpenAI-compatible API** and the official **`openai` Python SDK**. Restrictions are separated into reviewable files, with a test config for validating allowed and not-allowed scenarios.
+Runs **entirely on your PC** — no API keys, no cloud, no usage limits. Built for unlimited gaming PC build planning from budget 1080p rigs to no-compromise 4K enthusiast systems.
+
+## One command start
+
+```bash
+chmod +x start.sh
+./start.sh
+```
+
+Open **http://localhost:8000**
+
+Windows: double-click `start.bat` or run it from Command Prompt.
+
+## One-time setup (this PC only)
+
+1. **Install Ollama** — https://ollama.com
+2. **Pull a model** (any of these work well for PC builds):
+   ```bash
+   ollama pull llama3.1:8b
+   ollama pull qwen2.5:14b
+   ```
+3. **Run the app** — `./start.sh`
+
+That's it. No accounts, no subscriptions, no internet after setup.
 
 ## Features
 
-- **Chat** — streaming and non-streaming completions via `glm-5.1`
-- **Restrictions review** — human-readable `restrictions/RESTRICTIONS.md` plus structured JSON
-- **Test suite** — automated validation from `config/restrictions-test.json`
-- **Local restriction guard** — pre-check prompts against Z.AI policy categories before API calls
+| Tab | What it does |
+|-----|--------------|
+| **Chat** | Unlimited local AI chat |
+| **PC Builder** | Preset builds ($800–$5000) + custom budget/resolution/use-case builder |
+| **Restrictions** | Review allowed/not-allowed policy files |
+| **Test Suite** | Validate restriction guard scenarios |
+| **Settings** | Ollama URL, model, connection test |
 
-## Quick start
+## Usage limits
 
-### 1. Backend
+**None.** Local mode disables all artificial caps (`config/local.json`):
 
-```bash
-cd backend
-pip install -r requirements.txt
-cp ../.env.example ../.env
-# Edit ../.env and set ZAI_API_KEY
-cd ..
-python -m uvicorn backend.main:app --reload --app-dir backend
+- No daily message limit
+- No token quotas
+- No rate limiting
+- Limited only by your CPU/GPU/RAM
+
+## PC Builder presets
+
+| Build | Budget | Target |
+|-------|--------|--------|
+| Solid 1080p Gamer | $800 | 1080p high settings |
+| 1440p High Refresh | $1,400 | 1440p ultra, 100+ FPS |
+| 1440p Enthusiast | $2,200 | Max 1440p |
+| 4K Ultra Gaming | $3,200 | 4K ultra 60–120 FPS |
+| Ultimate 4K / 240Hz | $5,000 | No-compromise flagship |
+| Game + Stream | $2,500 | 1440p play + 1080p stream |
+| VR Ready | $2,000 | PCVR high settings |
+| SFF LAN | $1,800 | Portable ITX build |
+
+Config: `config/pc-builder-presets.json`
+
+## Project structure
+
+```
+├── start.sh / start.bat     # Single-process launcher
+├── config/
+│   ├── local.json           # Local-only, unlimited usage config
+│   ├── pc-builder-presets.json
+│   └── restrictions-test.json
+├── restrictions/            # Policy review files
+├── backend/                 # FastAPI + OpenAI SDK → Ollama
+└── frontend/                # React UI (served from :8000)
 ```
 
-Or from `backend/`:
+## Optional cloud fallback
 
-```bash
-python main.py
+Cloud is **not required**. To use Z.AI instead of Ollama, set in `.env`:
+
+```
+LOCAL_MODE=false
+ZAI_API_KEY=your-key
+INFERENCE_BASE_URL=https://api.z.ai/api/paas/v4/
+GLM_MODEL=glm-5.1
 ```
 
-### 2. Frontend
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-Open http://localhost:5173
-
-## API configuration (official OpenAI SDK)
-
-| Setting | Value |
-|---------|-------|
-| SDK | `openai>=1.0.0` |
-| Base URL | `https://api.z.ai/api/paas/v4/` |
-| Model | `glm-5.1` |
-| API key | https://z.ai/manage-apikey/apikey-list |
+## SDK (local)
 
 ```python
 from openai import OpenAI
 
 client = OpenAI(
-    api_key="your-Z.AI-api-key",
-    base_url="https://api.z.ai/api/paas/v4/",
+    api_key="local",
+    base_url="http://127.0.0.1:11434/v1",
 )
 
 response = client.chat.completions.create(
-    model="glm-5.1",
-    messages=[{"role": "user", "content": "Hello"}],
+    model="llama3.1:8b",
+    messages=[{"role": "user", "content": "Design a $2000 gaming PC"}],
 )
 ```
 
-## Restrictions layout
-
-| File | Purpose |
-|------|---------|
-| `restrictions/RESTRICTIONS.md` | **Review document** — allowed/not-allowed summary from Z.AI terms |
-| `restrictions/allowed.json` | Structured allowed use categories |
-| `restrictions/not-allowed.json` | Structured prohibited categories with guard keywords |
-| `config/restrictions-test.json` | **Test config** — all allowed & not-allowed scenarios for automated tests |
-
-Run tests via the UI **Test Suite** tab or:
-
-```bash
-curl -X POST http://localhost:8000/api/tests/run
-```
-
-## Restriction guard modes
-
-Set `RESTRICTION_GUARD_MODE` in `.env`:
-
-- `enforce` — block violating prompts locally (default)
-- `log_only` — detect violations but allow requests
-- `disabled` — skip local checks (Z.AI server moderation still applies)
-
-## Project structure
-
-```
-├── restrictions/          # Policy files for review
-├── config/                # Test configuration
-├── backend/               # FastAPI + OpenAI SDK
-├── frontend/              # React + Vite UI
-└── .env.example
-```
-
-## References
-
-- [Z.AI OpenAI Python SDK guide](https://docs.z.ai/guides/develop/openai/python.md)
-- [Z.AI Terms of Use](https://docs.z.ai/legal-agreement/terms-of-use.md)
-- [GLM Coding Plan Usage Policy](https://docs.z.ai/devpack/usage-policy.md)
-- [API error codes](https://docs.z.ai/api-reference/api-code.md)
-
 ## License
 
-MIT — GLM-5.1 model weights are MIT-licensed by Zhipu AI.
+MIT
