@@ -40,7 +40,16 @@ ollama pull qwen2.5-coder:14b
 
 Configs: `config/agent-training.json`, `config/model-quality.json`
 
-## Quick start
+## Quick start (Windows — your PC)
+
+```bat
+setup-windows.bat
+run.bat
+```
+
+Open **http://127.0.0.1:8000** → **Agent** tab. Full guide: [WINDOWS.md](WINDOWS.md)
+
+## Quick start (macOS / Linux)
 
 ```bash
 chmod +x start.sh && ./start.sh
@@ -48,19 +57,18 @@ chmod +x start.sh && ./start.sh
 
 Open **http://localhost:8000** → **Agent** tab
 
-## Windows desktop (.exe)
-
-Build a standalone Windows app (no separate Python install needed for end users):
+## Windows desktop (.exe) — build on your PC
 
 ```bat
-build\windows\build.bat
+setup-windows.bat
+build-windows.bat
 ```
 
-Run: `dist\GLM-5.1-UI\GLM-5.1-UI.exe` — opens your browser automatically at `http://127.0.0.1:8000`.
+Run: `dist\GLM-5.1-UI\GLM-5.1-UI.exe` — opens your browser at `http://127.0.0.1:8000`.
 
-**CI builds:** Every push to `main` produces a Windows artifact via GitHub Actions (`.github/workflows/build-windows.yml`). Download **GLM-5.1-UI-windows** from the latest workflow run.
+Also creates `release\GLM-5.1-UI-windows.zip` for sharing.
 
-Requirements to **build** on Windows: Python 3.11+, Node.js 20+, then Ollama for local models.
+**CI alternative:** Download **GLM-5.1-UI-windows** from GitHub Actions if you don't want to build locally.
 
 ## Features (Cursor parity)
 
