@@ -24,6 +24,9 @@ interface AgentEvent {
   message?: string;
   model?: string;
   temperature?: number;
+  summary?: string;
+  zero_errors?: boolean;
+  path?: string;
 }
 
 interface ChatItem {
@@ -180,6 +183,18 @@ export function AgentPanel({ settings }: AgentPanelProps) {
               loadTree();
             }
 
+            if (event.type === "verify" && event.summary) {
+              setItems((prev) => [
+                ...prev,
+                {
+                  role: "tool" as const,
+                  content: event.summary ?? "",
+                  toolName: event.zero_errors ? "verify_code ✓" : "verify_code ✗",
+                  toolArgs: event.path ?? "",
+                },
+              ]);
+            }
+
             if (event.type === "error") {
               setItems((prev) => [
                 ...prev,
@@ -272,7 +287,7 @@ export function AgentPanel({ settings }: AgentPanelProps) {
             <div className="text-center py-12 max-w-lg mx-auto">
               <h2 className="text-xl font-semibold mb-2">Coding Agent</h2>
               <p className="text-sm text-glm-muted mb-4">
-                Like Cursor: edit files, run terminal, search codebase, browse the web, use git.
+                Like Cursor: edit files, run terminal, search codebase, verify code (Ruff/mypy/ESLint/tsc), browse the web, use git.
               </p>
               <div className="flex flex-wrap justify-center gap-2">
                 {[

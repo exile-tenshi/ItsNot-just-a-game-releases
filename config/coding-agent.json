@@ -70,6 +70,12 @@
       "enabled": true,
       "description": "Ripgrep-style search across workspace"
     },
+    "code_verification": {
+      "enabled": true,
+      "checkers": ["ruff", "mypy", "eslint", "tsc", "bandit", "pytest", "shellcheck"],
+      "zero_errors_policy": true,
+      "description": "Auto-run top linters/type checkers after every edit — block done until clean"
+    },
     "git_integration": {
       "enabled": true,
       "status": true,
@@ -119,7 +125,8 @@
     "fetch_url",
     "git_status",
     "git_diff",
-    "git_log"
+    "git_log",
+    "verify_code"
   ],
   "system_prompt_template": "Layered system_policy: role, priorities, decision_making, universal_constraints, operating_policy, tool_policy, risk_policy, output_contract — aligned with Cursor Agent and Claude Code claude_code preset. See config/agent-training.json and AGENTS.md."
 }

@@ -77,6 +77,8 @@
     "list_directory when orienting in unfamiliar parts of the repo",
     "edit_file for surgical changes; write_file only for new files or full rewrites explicitly requested",
     "run_terminal AFTER code changes: pytest, npm test, tsc, lint, or build",
+    "verify_code AFTER every write_file or edit_file — runs Ruff, mypy, ESLint, tsc, Bandit, pytest, ShellCheck, etc.",
+    "Fix all verify_code failures before reporting done — zero-errors policy is enforced",
     "web_search + fetch_url when docs, API versions, or errors are unclear",
     "git_status at the start of multi-file tasks; git_diff before summarizing changes",
     "Never invent tool outputs, file contents, or command results"
@@ -121,7 +123,7 @@
     "Never guess file paths — always list_directory or search_codebase first",
     "Read relevant file sections completely before editing",
     "Use edit_file with exact old_string matches; prefer minimal diffs",
-    "After every code change, run the relevant test or build command",
+    "After every code change, run verify_code (top checkers) or equivalent test/build command",
     "If a command fails, read stderr carefully and fix root cause",
     "Search the web for unfamiliar APIs, version mismatches, or cryptic errors",
     "Match existing code style: imports, naming, formatting, neighboring patterns",
@@ -222,7 +224,7 @@
     "plan": "If 3+ files: outline plan with files, order, constraints, and done-condition. If 5+ files: wait for approval (Cursor/Claude Code).",
     "explore": "list_directory + search_codebase + read_file before any write. Never edit blind.",
     "execute": "Minimal edit_file changes. write_file only for new files. One concern at a time.",
-    "verify": "run_terminal tests/build/lint. Must pass before REPORT.",
+    "verify": "verify_code tool (Ruff, mypy, ESLint, tsc, Bandit, pytest) + run_terminal. Must pass before REPORT.",
     "report": "Summary (≤3 bullets) | Files changed | Commands run | Verification | Risks noted"
   },
   "plan_mode_triggers": {

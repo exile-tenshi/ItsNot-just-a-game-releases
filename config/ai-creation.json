@@ -1,0 +1,168 @@
+{
+  "version": "1.0.0",
+  "description": "All AI creation modalities — Z.AI GLM ecosystem + local agent capabilities",
+  "providers": {
+    "zai": {
+      "base_url": "https://api.z.ai/api/paas/v4/",
+      "docs": "https://docs.z.ai/"
+    },
+    "local": {
+      "base_url": "http://127.0.0.1:11434/v1",
+      "engine": "Ollama"
+    }
+  },
+  "creation_types": [
+    {
+      "id": "text-chat",
+      "category": "text",
+      "name": "Chat & Completion",
+      "models": ["glm-5.1", "glm-5.3", "glm-5.3-flash", "qwen2.5-coder:14b"],
+      "endpoint": "/api/chat",
+      "description": "Multi-turn conversation, Q&A, explanations",
+      "tab": "chat"
+    },
+    {
+      "id": "coding-agent",
+      "category": "code",
+      "name": "Autonomous Coding Agent",
+      "models": ["glm-5.1", "qwen2.5-coder:14b", "gpt-4o"],
+      "endpoint": "/api/agent/run",
+      "description": "Cursor-like agent: edit files, terminal, git, verify code",
+      "tab": "agent",
+      "tools": ["read_file", "write_file", "edit_file", "verify_code", "run_terminal"]
+    },
+    {
+      "id": "code-verify",
+      "category": "code",
+      "name": "Code Verification",
+      "models": [],
+      "endpoint": "/api/verify/run",
+      "description": "Ruff, mypy, ESLint, tsc, Bandit, pytest — zero-errors gate",
+      "tab": "agent"
+    },
+    {
+      "id": "image-generation",
+      "category": "image",
+      "name": "Image Generation",
+      "models": ["glm-image"],
+      "zai_endpoint": "https://api.z.ai/api/paas/v4/images/generations",
+      "description": "GLM-Image — text-to-image (Z.AI cloud)",
+      "requires_api_key": true
+    },
+    {
+      "id": "video-generation",
+      "category": "video",
+      "name": "Video Generation",
+      "models": ["cogvideox"],
+      "zai_endpoint": "https://api.z.ai/api/paas/v4/videos/generations",
+      "description": "CogVideoX — text/image to video async (Z.AI cloud)",
+      "requires_api_key": true
+    },
+    {
+      "id": "audio-transcription",
+      "category": "audio",
+      "name": "Speech-to-Text",
+      "models": ["glm-asr-2512"],
+      "zai_endpoint": "https://api.z.ai/api/paas/v4/audio/transcriptions",
+      "description": "GLM-ASR — audio transcription (Z.AI cloud)",
+      "requires_api_key": true
+    },
+    {
+      "id": "ocr-layout",
+      "category": "vision",
+      "name": "OCR & Layout Parsing",
+      "models": ["glm-ocr"],
+      "zai_endpoint": "https://api.z.ai/api/paas/v4/layout-parsing",
+      "description": "GLM-OCR — document and image text extraction",
+      "requires_api_key": true
+    },
+    {
+      "id": "thinking-mode",
+      "category": "text",
+      "name": "Deep Thinking / Reasoning",
+      "models": ["glm-5.1", "glm-5.3"],
+      "description": "Extended reasoning mode (extra_body.thinking)",
+      "tab": "chat"
+    },
+    {
+      "id": "function-calling",
+      "category": "code",
+      "name": "Function Calling / Tools",
+      "models": ["glm-5.1", "gpt-4o"],
+      "description": "OpenAI-compatible tool use for agents",
+      "tab": "agent"
+    },
+    {
+      "id": "structured-output",
+      "category": "text",
+      "name": "Structured Output",
+      "models": ["glm-5.1", "glm-5.3"],
+      "description": "JSON schema constrained responses",
+      "requires_api_key": true
+    },
+    {
+      "id": "web-search",
+      "category": "tools",
+      "name": "Web Search",
+      "models": [],
+      "endpoint": "/api/tools/run",
+      "tool": "web_search",
+      "description": "Internet search for docs and errors"
+    },
+    {
+      "id": "translation-agent",
+      "category": "agent",
+      "name": "Translation Agent",
+      "models": ["glm-5.1"],
+      "zai_endpoint": "https://api.z.ai/api/paas/v4/agents/translation",
+      "description": "Z.AI multilingual translation agent",
+      "requires_api_key": true
+    },
+    {
+      "id": "slide-agent",
+      "category": "agent",
+      "name": "Slide & Poster Agent",
+      "models": ["glm-5.1"],
+      "zai_endpoint": "https://api.z.ai/api/paas/v4/agents/slide",
+      "description": "GLM Slide/Poster generation agent (beta)",
+      "requires_api_key": true
+    },
+    {
+      "id": "pc-builder",
+      "category": "specialty",
+      "name": "Gaming PC Builder",
+      "models": ["glm-5.1", "qwen2.5:14b"],
+      "endpoint": "/api/pc-builder/build/stream",
+      "description": "Hardware advisor — budget builds to enthusiast rigs",
+      "tab": "pcbuilder"
+    },
+    {
+      "id": "streaming",
+      "category": "infra",
+      "name": "Streaming Output",
+      "models": ["all"],
+      "description": "SSE streaming for chat and agent"
+    },
+    {
+      "id": "embeddings",
+      "category": "text",
+      "name": "Embeddings / Tokenizer",
+      "models": ["glm-5.1"],
+      "zai_endpoint": "https://api.z.ai/api/paas/v4/tokenizer",
+      "description": "Token counting and embedding utilities",
+      "requires_api_key": true
+    }
+  ],
+  "categories": [
+    { "id": "text", "label": "Text & Chat", "icon": "💬" },
+    { "id": "code", "label": "Code & Agent", "icon": "🤖" },
+    { "id": "image", "label": "Image", "icon": "🎨" },
+    { "id": "video", "label": "Video", "icon": "🎬" },
+    { "id": "audio", "label": "Audio", "icon": "🎤" },
+    { "id": "vision", "label": "Vision / OCR", "icon": "👁️" },
+    { "id": "agent", "label": "Z.AI Agents", "icon": "🧠" },
+    { "id": "specialty", "label": "Specialty", "icon": "⚡" },
+    { "id": "tools", "label": "Tools", "icon": "🔧" },
+    { "id": "infra", "label": "Infrastructure", "icon": "⚙️" }
+  ]
+}

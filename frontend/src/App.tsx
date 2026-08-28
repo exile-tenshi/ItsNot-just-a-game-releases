@@ -6,6 +6,7 @@ import { RestrictionsPanel } from "./components/RestrictionsPanel";
 import { TestSuitePanel } from "./components/TestSuitePanel";
 import { SettingsPanel } from "./components/SettingsPanel";
 import { PCBuilderPanel } from "./components/PCBuilderPanel";
+import { CreationPanel } from "./components/CreationPanel";
 import type { AppSettings, TabId } from "./types";
 import { DEFAULT_SETTINGS } from "./types";
 
@@ -37,6 +38,9 @@ export default function App() {
         {activeTab === "agent" && <AgentPanel settings={settings} />}
         {activeTab === "chat" && <ChatPanel settings={settings} />}
         {activeTab === "pcbuilder" && <PCBuilderPanel settings={settings} />}
+        {activeTab === "creation" && (
+          <CreationPanel onNavigate={(tab) => setActiveTab(tab)} />
+        )}
         {activeTab === "restrictions" && <RestrictionsPanel />}
         {activeTab === "tests" && <TestSuitePanel />}
         {activeTab === "settings" && (

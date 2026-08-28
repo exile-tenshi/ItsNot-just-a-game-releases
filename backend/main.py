@@ -13,7 +13,9 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from agent import load_agent_config, run_agent
+from ai_creation import get_creation_by_id, list_by_category, load_creation_catalog
 from codebase_index import build_project_brief
+from code_checker import format_verify_report, load_checker_config, verify_code
 from config import ROOT_DIR, settings
 from local_engine import get_local_status, load_local_config
 from openai_client import chat_completion, create_openai_client, iter_stream_chunks, resolve_model
@@ -115,6 +117,11 @@ class ToolRunRequest(BaseModel):
     arguments: dict[str, Any] = Field(default_factory=dict)
 
 
+class VerifyCodeRequest(BaseModel):
+    paths: list[str] = Field(default_factory=list)
+    languages: list[str] = Field(default_factory=list)
+
+
 @app.get("/api/health")
 def health() -> dict[str, Any]:
     status = get_local_status()
@@ -150,7 +157,10 @@ def get_config() -> dict[str, Any]:
 
 @app.get("/api/agent/training")
 def agent_training() -> dict[str, Any]:
-    return load_training()
+    training = load_training()
+    sources_path = ROOT_DIR / "config" / "training-sources.md"
+    sources_doc = sources_path.read_text(encoding="utf-8") if sources_path.exists() else ""
+    return {**training, "verification_doc": sources_doc}
 
 
 @app.get("/api/codebase/brief")
@@ -245,6 +255,41 @@ def workspace_write_file(body: WorkspaceWriteRequest) -> dict[str, Any]:
 def run_tool(body: ToolRunRequest) -> dict[str, str]:
     result = execute_tool(body.name, body.arguments)
     return {"name": body.name, "result": result}
+
+
+@app.get("/api/verify/config")
+def verify_config() -> dict[str, Any]:
+    cfg = load_checker_config()
+    return {
+        "policy": cfg.get("zero_errors_policy", {}),
+        "checkers": cfg.get("checkers", {}),
+        "sources": cfg.get("external_sources_reference", []),
+    }
+
+
+@app.post("/api/verify/run")
+def verify_run(body: VerifyCodeRequest) -> dict[str, Any]:
+    report = verify_code(
+        paths=body.paths or None,
+        languages=body.languages or None,
+    )
+    report["formatted"] = format_verify_report(report)
+    return report
+
+
+@app.get("/api/ai/creation/catalog")
+def ai_creation_catalog() -> dict[str, Any]:
+    catalog = load_creation_catalog()
+    catalog["by_category"] = list_by_category()
+    return catalog
+
+
+@app.get("/api/ai/creation/{creation_id}")
+def ai_creation_detail(creation_id: str) -> dict[str, Any]:
+    item = get_creation_by_id(creation_id)
+    if not item:
+        raise HTTPException(status_code=404, detail="Creation type not found")
+    return item
 
 
 @app.get("/api/local/status")

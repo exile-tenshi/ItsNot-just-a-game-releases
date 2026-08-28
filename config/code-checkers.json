@@ -1,0 +1,165 @@
+{
+  "version": "1.0.0",
+  "description": "Top code-checking sources — run after every edit until zero errors",
+  "zero_errors_policy": {
+    "enabled": true,
+    "block_agent_done_until_clean": true,
+    "max_fix_rounds": 5,
+    "description": "Agent must run verify_code after edits and fix all reported issues before finishing"
+  },
+  "checkers": {
+    "python": [
+      {
+        "id": "ruff",
+        "name": "Ruff",
+        "source": "https://docs.astral.sh/ruff/",
+        "command": "python3 -m ruff check {paths}",
+        "install": "pip install ruff",
+        "category": "lint"
+      },
+      {
+        "id": "ruff-format",
+        "name": "Ruff Format Check",
+        "source": "https://docs.astral.sh/ruff/formatter/",
+        "command": "python3 -m ruff format --check {paths}",
+        "install": "pip install ruff",
+        "category": "format"
+      },
+      {
+        "id": "mypy",
+        "name": "mypy",
+        "source": "https://mypy.readthedocs.io/",
+        "command": "python3 -m mypy {paths} --ignore-missing-imports --no-error-summary 2>&1 | head -50",
+        "install": "pip install mypy",
+        "category": "types"
+      },
+      {
+        "id": "py_compile",
+        "name": "Python Compile",
+        "source": "Python stdlib",
+        "command": "python3 -m py_compile {paths}",
+        "install": null,
+        "category": "syntax"
+      },
+      {
+        "id": "bandit",
+        "name": "Bandit Security",
+        "source": "https://bandit.readthedocs.io/",
+        "command": "python3 -m bandit -q -r {paths} 2>&1 | head -30",
+        "install": "pip install bandit",
+        "category": "security"
+      },
+      {
+        "id": "pytest",
+        "name": "pytest",
+        "source": "https://docs.pytest.org/",
+        "command": "python3 -m pytest -x --tb=short -q 2>&1 | tail -40",
+        "install": "pip install pytest",
+        "category": "test",
+        "scope": "project"
+      }
+    ],
+    "typescript": [
+      {
+        "id": "tsc",
+        "name": "TypeScript Compiler",
+        "source": "https://www.typescriptlang.org/",
+        "command": "npx tsc --noEmit 2>&1 | head -50",
+        "install": "npm install typescript",
+        "category": "types",
+        "scope": "project"
+      },
+      {
+        "id": "eslint",
+        "name": "ESLint",
+        "source": "https://eslint.org/",
+        "command": "npx eslint {paths} --max-warnings 0 2>&1 | head -50",
+        "install": "npm install eslint",
+        "category": "lint"
+      },
+      {
+        "id": "prettier",
+        "name": "Prettier Check",
+        "source": "https://prettier.io/",
+        "command": "npx prettier --check {paths} 2>&1 | head -30",
+        "install": "npm install prettier",
+        "category": "format"
+      }
+    ],
+    "javascript": [
+      {
+        "id": "eslint-js",
+        "name": "ESLint",
+        "source": "https://eslint.org/",
+        "command": "npx eslint {paths} --max-warnings 0 2>&1 | head -50",
+        "category": "lint"
+      }
+    ],
+    "shell": [
+      {
+        "id": "shellcheck",
+        "name": "ShellCheck",
+        "source": "https://www.shellcheck.net/",
+        "command": "shellcheck {paths} 2>&1 | head -30",
+        "install": "apt install shellcheck",
+        "category": "lint"
+      }
+    ],
+    "go": [
+      {
+        "id": "go-vet",
+        "name": "go vet",
+        "source": "https://go.dev/doc/",
+        "command": "go vet ./... 2>&1 | head -30",
+        "category": "lint",
+        "scope": "project"
+      },
+      {
+        "id": "go-build",
+        "name": "go build",
+        "source": "https://go.dev/doc/",
+        "command": "go build ./... 2>&1 | head -30",
+        "category": "build",
+        "scope": "project"
+      }
+    ],
+    "rust": [
+      {
+        "id": "cargo-check",
+        "name": "cargo check",
+        "source": "https://doc.rust-lang.org/cargo/",
+        "command": "cargo check 2>&1 | tail -40",
+        "category": "types",
+        "scope": "project"
+      },
+      {
+        "id": "cargo-clippy",
+        "name": "Clippy",
+        "source": "https://github.com/rust-lang/rust-clippy",
+        "command": "cargo clippy -- -D warnings 2>&1 | tail -40",
+        "category": "lint",
+        "scope": "project"
+      }
+    ],
+    "json": [
+      {
+        "id": "json-parse",
+        "name": "JSON Syntax",
+        "source": "Python stdlib",
+        "command": "python3 -c \"import json,sys; [json.load(open(p)) for p in '{paths}'.split()]\"",
+        "category": "syntax"
+      }
+    ]
+  },
+  "external_sources_reference": [
+    "Ruff (Astral) — fastest Python linter",
+    "mypy — Python type checking",
+    "ESLint — JavaScript/TypeScript lint",
+    "TypeScript tsc — type checking",
+    "Prettier — formatting",
+    "Bandit — Python security",
+    "ShellCheck — shell scripts",
+    "go vet / cargo clippy — Go/Rust",
+    "pytest / npm test — test suites"
+  ]
+}

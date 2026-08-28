@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 from config import settings
+from code_checker import format_verify_report, verify_code
 from web_search import fetch_url, web_search
 from workspace import (
     edit_file,
@@ -173,6 +174,28 @@ def get_tool_schemas() -> list[dict[str, Any]]:
         {
             "type": "function",
             "function": {
+                "name": "verify_code",
+                "description": "Run top code checkers (Ruff, mypy, ESLint, tsc, Bandit, pytest, ShellCheck, etc.) until zero errors. Call after every code edit.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "paths": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "description": "Optional file paths to check (defaults to all detected languages in workspace)",
+                        },
+                        "languages": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "description": "Optional language filter: python, typescript, javascript, go, rust, shell",
+                        },
+                    },
+                },
+            },
+        },
+        {
+            "type": "function",
+            "function": {
                 "name": "git_log",
                 "description": "Recent git commits",
                 "parameters": {
@@ -247,6 +270,12 @@ def git_log(count: int = 10) -> str:
     return _git_cmd(["log", f"-{count}", "--oneline", "--decorate"])
 
 
+def verify_code_tool(paths: list[str] | None = None, languages: list[str] | None = None) -> dict[str, Any]:
+    report = verify_code(paths=paths or None, languages=languages or None)
+    report["formatted"] = format_verify_report(report)
+    return report
+
+
 TOOL_HANDLERS: dict[str, Callable[..., Any]] = {
     "read_file": lambda **kw: read_file(kw["path"], kw.get("offset", 1), kw.get("limit", 500)),
     "write_file": lambda **kw: write_file(kw["path"], kw["content"]),
@@ -259,6 +288,7 @@ TOOL_HANDLERS: dict[str, Callable[..., Any]] = {
     "git_status": lambda **kw: git_status(),
     "git_diff": lambda **kw: git_diff(kw.get("path")),
     "git_log": lambda **kw: git_log(kw.get("count", 10)),
+    "verify_code": lambda **kw: verify_code_tool(kw.get("paths"), kw.get("languages")),
 }
 
 

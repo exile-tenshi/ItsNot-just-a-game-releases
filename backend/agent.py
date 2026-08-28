@@ -6,6 +6,7 @@ import json
 import re
 from typing import Any, Iterator
 
+from code_checker import format_verify_report, load_checker_config, verify_code
 from codebase_index import build_project_brief, find_relevant_files
 from openai_client import chat_completion, resolve_best_agent_model
 from prompts import agent_temperature, build_agent_system_prompt, load_quality, load_training
@@ -29,6 +30,7 @@ def _parse_tool_args(args: str | dict[str, Any]) -> dict[str, Any]:
         return {}
 
 
+def _suggest_verify_command(edited_paths: list[str]) -> str | None:
     root_hints = " ".join(edited_paths).lower()
     if any(p.endswith(".py") for p in edited_paths):
         if "test" in root_hints:
@@ -38,7 +40,16 @@ def _parse_tool_args(args: str | dict[str, Any]) -> dict[str, Any]:
         return "cd frontend 2>/dev/null && npm run build 2>&1 | tail -20 || npx tsc --noEmit 2>&1 | tail -20"
     if "package.json" in edited_paths:
         return "npm test 2>&1 | tail -20"
-    return None
+    return "verify_code tool — runs Ruff, mypy, ESLint, tsc, Bandit, pytest, etc."
+
+
+def _checker_policy() -> dict[str, Any]:
+    return load_checker_config().get("zero_errors_policy", {})
+
+
+def _auto_verify_after_edit(path: str) -> tuple[dict[str, Any], str]:
+    report = verify_code(paths=[path])
+    return report, format_verify_report(report)
 
 
 def run_agent(
@@ -97,22 +108,26 @@ def run_agent(
 
     edited_files: list[str] = []
     verify_pending = False
+    last_zero_errors = True
+    verify_rounds = 0
+    checker_policy = _checker_policy()
+    block_until_clean = checker_policy.get("block_agent_done_until_clean", True)
+    max_fix_rounds = checker_policy.get("max_fix_rounds", 5)
     consecutive_errors = 0
 
     for iteration in range(max_iter):
         yield {"type": "iteration", "iteration": iteration + 1, "max": max_iter}
 
         # Inject verify reminder if we edited but haven't tested
-        if verify_pending and iteration > 0:
+        if verify_pending and iteration > 0 and not last_zero_errors:
             cmd = _suggest_verify_command(edited_files)
-            if cmd:
-                messages.append(
-                    {
-                        "role": "user",
-                        "content": f"VERIFICATION REQUIRED: You edited {edited_files[-3:]} but have not verified. "
-                        f"Run: `{cmd}` or equivalent test, then report results.",
-                    }
-                )
+            messages.append(
+                {
+                    "role": "user",
+                    "content": f"VERIFICATION REQUIRED: You edited {edited_files[-3:]} but checkers still report errors. "
+                    f"Run verify_code on those paths or `{cmd}`, fix every issue, then verify again.",
+                }
+            )
             verify_pending = False
 
         try:
@@ -144,20 +159,41 @@ def run_agent(
 
         tool_calls = msg.tool_calls or []
         if not tool_calls:
-            # Final quality pass — nudge if edits without verify
+            if (
+                edited_files
+                and block_until_clean
+                and not last_zero_errors
+                and verify_rounds < max_fix_rounds
+                and iteration < max_iter - 1
+            ):
+                messages.append({"role": "assistant", "content": msg.content or ""})
+                messages.append(
+                    {
+                        "role": "user",
+                        "content": "BLOCKED — zero-errors policy: code checkers still report failures. "
+                        "Call verify_code, fix every reported issue, re-run verify_code until ZERO ERRORS: YES, then REPORT.",
+                    }
+                )
+                continue
+
             if edited_files and iteration < max_iter - 1:
                 last_assistant = msg.content or ""
-                if not re.search(r"(verify|test|pass|✓|success|exit code 0)", last_assistant, re.I):
+                if not re.search(r"(verify|test|pass|✓|success|exit code 0|zero errors)", last_assistant, re.I):
                     messages.append({"role": "assistant", "content": msg.content or ""})
                     messages.append(
                         {
                             "role": "user",
-                            "content": "Before finishing: run verification (tests/build) and include results in your REPORT.",
+                            "content": "Before finishing: run verify_code (top linters/type checkers) and include results in your REPORT.",
                         }
                     )
-                    verify_pending = False
                     continue
-            yield {"type": "done", "finish_reason": choice.finish_reason or "stop"}
+
+            yield {
+                "type": "done",
+                "finish_reason": choice.finish_reason or "stop",
+                "zero_errors": last_zero_errors,
+                "files_edited": edited_files,
+            }
             return
 
         messages.append(
@@ -187,6 +223,24 @@ def run_agent(
             if name in ("write_file", "edit_file") and parsed.get("path"):
                 edited_files.append(parsed["path"])
                 verify_pending = True
+                if checker_policy.get("enabled", True):
+                    report, summary = _auto_verify_after_edit(parsed["path"])
+                    last_zero_errors = report.get("zero_errors", False)
+                    verify_rounds += 1
+                    yield {"type": "verify", "path": parsed["path"], "zero_errors": last_zero_errors, "summary": summary}
+                    result += f"\n\n--- AUTO CODE VERIFY ---\n{summary}"
+                    if not last_zero_errors:
+                        result += "\n\nFix all checker errors before finishing."
+
+            if name == "verify_code":
+                try:
+                    vr = json.loads(result) if isinstance(result, str) else result
+                    if isinstance(vr, dict):
+                        last_zero_errors = vr.get("zero_errors", False)
+                        verify_rounds += 1
+                        verify_pending = not last_zero_errors
+                except (json.JSONDecodeError, TypeError):
+                    pass
 
             # Help model recover from tool errors
             result_obj: Any = result

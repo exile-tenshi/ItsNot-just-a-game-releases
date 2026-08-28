@@ -2,6 +2,20 @@
 
 Full coding AI on your PC with **internet access**, **cloud providers**, and every major feature from Cursor, Cline, and Windsurf.
 
+## Training (aligned with top AI tools)
+
+Training is verified against **Cursor, Claude Code, Cline, Windsurf, Aider, and Continue.dev**.
+
+| File | Purpose |
+|------|---------|
+| `config/agent-training.json` | Master training — same rules as top agents |
+| `config/training-sources.md` | Verification doc — what was aligned |
+| `AGENTS.md` | Open agent standard |
+| `CLAUDE.md` | Claude Code project memory |
+| `.cursor/rules/01-agent-behaviour.mdc` | Cursor alwaysApply rules |
+
+Key cross-tool rules: **5+ files = plan + approval**, **never install without asking**, **minimal diffs**, **verify before done**, **≤3 bullet summary**.
+
 ## Model quality (trained agent)
 
 The agent uses **trained prompts + few-shot examples** from `config/agent-training.json`:

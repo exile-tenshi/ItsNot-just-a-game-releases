@@ -6,6 +6,7 @@ const NAV: { id: TabId; label: string; icon: string }[] = [
   { id: "agent", label: "Agent", icon: "🤖" },
   { id: "chat", label: "Chat", icon: "💬" },
   { id: "pcbuilder", label: "PC Builder", icon: "🖥️" },
+  { id: "creation", label: "AI Create", icon: "✨" },
   { id: "restrictions", label: "Restrictions", icon: "📋" },
   { id: "tests", label: "Tests", icon: "🧪" },
   { id: "settings", label: "Settings", icon: "⚙️" },

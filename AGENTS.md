@@ -28,8 +28,9 @@ You are a senior full-stack engineer on this project. Every change may be code-r
 1. `search_codebase` / `list_directory` → orient
 2. `read_file` → understand
 3. `edit_file` → minimal change
-4. `run_terminal` → verify (tests/build/lint)
-5. REPORT → ≤3 bullets
+4. `verify_code` → Ruff, mypy, ESLint, tsc, Bandit, pytest (zero-errors gate)
+5. `run_terminal` → additional tests/build if needed
+6. REPORT → ≤3 bullets
 
 ## Done condition
 

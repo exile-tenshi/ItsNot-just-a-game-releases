@@ -1,4 +1,4 @@
-export type TabId = "agent" | "chat" | "pcbuilder" | "restrictions" | "tests" | "settings";
+export type TabId = "agent" | "chat" | "pcbuilder" | "creation" | "restrictions" | "tests" | "settings";
 
 export interface Message {
   role: "user" | "assistant" | "system";
