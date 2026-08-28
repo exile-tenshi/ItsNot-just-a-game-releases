@@ -17,7 +17,7 @@ from ai_creation import get_creation_by_id, list_by_category, load_creation_cata
 from codebase_index import build_project_brief
 from code_checker import format_verify_report, load_checker_config, verify_code
 from config import ROOT_DIR, settings
-from local_engine import get_local_status, load_local_config
+from loopholes import count_by_used, list_all_loopholes, load_loopholes
 from openai_client import chat_completion, create_openai_client, iter_stream_chunks, resolve_model
 from pc_builder import PC_BUILDER_SYSTEM_PROMPT, build_custom_prompt, load_presets
 from prompts import build_chat_system_prompt, load_training
@@ -410,6 +410,17 @@ def get_restrictions() -> dict[str, Any]:
         "not_allowed": guard.get_not_allowed_categories(),
         "markdown": guard.get_restrictions_markdown(),
         "guard_mode": guard.mode,
+    }
+
+
+@app.get("/api/loopholes")
+def get_loopholes() -> dict[str, Any]:
+    cfg = load_loopholes()
+    counts = count_by_used()
+    return {
+        **cfg,
+        "summary": {**cfg.get("summary", {}), **counts},
+        "flat_list": list_all_loopholes(),
     }
 
 

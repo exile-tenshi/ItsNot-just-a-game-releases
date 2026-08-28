@@ -12,26 +12,49 @@ interface Category {
   guard_keywords?: string[];
 }
 
+interface LoopholeItem {
+  id: string;
+  name: string;
+  description: string;
+  used: boolean;
+  files?: string[];
+  category?: string;
+  category_label?: string;
+}
+
+interface LoopholesData {
+  summary: { total_loopholes?: number; used_true?: number; used_false?: number; total?: number };
+  categories: Record<string, { label: string; loopholes: LoopholeItem[] }>;
+  highest_impact_bypass_paths?: string[];
+  legend?: Record<string, string>;
+}
+
 export function RestrictionsPanel() {
   const [allowed, setAllowed] = useState<Category[]>([]);
   const [notAllowed, setNotAllowed] = useState<Category[]>([]);
   const [markdown, setMarkdown] = useState("");
   const [guardMode, setGuardMode] = useState("enforce");
-  const [view, setView] = useState<"review" | "allowed" | "blocked">("review");
+  const [loopholes, setLoopholes] = useState<LoopholesData | null>(null);
+  const [view, setView] = useState<"review" | "allowed" | "blocked" | "loopholes">("review");
   const [loading, setLoading] = useState(true);
+  const [loopholeFilter, setLoopholeFilter] = useState<"all" | "used" | "unused">("all");
 
   useEffect(() => {
-    apiFetch<{
-      allowed: Category[];
-      not_allowed: Category[];
-      markdown: string;
-      guard_mode: string;
-    }>("/api/restrictions")
-      .then((data) => {
+    Promise.all([
+      apiFetch<{
+        allowed: Category[];
+        not_allowed: Category[];
+        markdown: string;
+        guard_mode: string;
+      }>("/api/restrictions"),
+      apiFetch<LoopholesData>("/api/loopholes"),
+    ])
+      .then(([data, loopholeData]) => {
         setAllowed(data.allowed);
         setNotAllowed(data.not_allowed);
         setMarkdown(data.markdown);
         setGuardMode(data.guard_mode);
+        setLoopholes(loopholeData);
       })
       .finally(() => setLoading(false));
   }, []);
@@ -52,6 +75,18 @@ export function RestrictionsPanel() {
       </div>
     );
   }
+
+  const flatLoopholes: LoopholeItem[] = loopholes
+    ? Object.entries(loopholes.categories).flatMap(([catId, cat]) =>
+        cat.loopholes.map((l) => ({ ...l, category: catId, category_label: cat.label })),
+      )
+    : [];
+
+  const filteredLoopholes = flatLoopholes.filter((l) => {
+    if (loopholeFilter === "used") return l.used;
+    if (loopholeFilter === "unused") return !l.used;
+    return true;
+  });
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-6">
@@ -87,6 +122,10 @@ export function RestrictionsPanel() {
             { id: "review" as const, label: "Full Review Document" },
             { id: "allowed" as const, label: `Allowed (${allowed.length})` },
             { id: "blocked" as const, label: `Not Allowed (${notAllowed.length})` },
+            {
+              id: "loopholes" as const,
+              label: `Loopholes (${loopholes?.summary?.used_true ?? 0} active)`,
+            },
           ]
         ).map((tab) => (
           <button
@@ -123,6 +162,92 @@ export function RestrictionsPanel() {
           {notAllowed.map((cat) => (
             <CategoryCard key={cat.id} category={cat} variant="blocked" />
           ))}
+        </div>
+      )}
+
+      {view === "loopholes" && loopholes && (
+        <div className="space-y-6">
+          <div className="bg-glm-card border border-glm-border rounded-xl p-5">
+            <h3 className="font-semibold mb-2">Loophole registry</h3>
+            <p className="text-sm text-glm-muted mb-3">
+              Source: <code className="text-glm-accent2">config/loopholes.json</code> —{" "}
+              {loopholes.legend?.used ?? "used=true means active in default deployment"}
+            </p>
+            <div className="flex flex-wrap gap-3 text-sm">
+              <span className="px-3 py-1 rounded-lg bg-glm-bg border border-glm-border">
+                Total: {loopholes.summary.total ?? flatLoopholes.length}
+              </span>
+              <span className="px-3 py-1 rounded-lg bg-glm-danger/20 text-glm-danger border border-glm-danger/30">
+                used: true → {loopholes.summary.used_true ?? 0} active
+              </span>
+              <span className="px-3 py-1 rounded-lg bg-glm-success/20 text-glm-success border border-glm-success/30">
+                used: false → {loopholes.summary.used_false ?? 0} inactive
+              </span>
+            </div>
+            <div className="flex gap-2 mt-4">
+              {(["all", "used", "unused"] as const).map((f) => (
+                <button
+                  key={f}
+                  type="button"
+                  onClick={() => setLoopholeFilter(f)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium border ${
+                    loopholeFilter === f
+                      ? "bg-glm-accent border-glm-accent text-white"
+                      : "border-glm-border text-glm-muted"
+                  }`}
+                >
+                  {f === "all" ? "All" : f === "used" ? "used: true" : "used: false"}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {loopholes.highest_impact_bypass_paths && (
+            <div className="bg-glm-card border border-amber-500/30 rounded-xl p-5">
+              <h4 className="font-semibold text-amber-400 mb-2">Highest-impact bypass paths</h4>
+              <ul className="text-sm text-glm-muted space-y-1 list-disc list-inside">
+                {loopholes.highest_impact_bypass_paths.map((p) => (
+                  <li key={p}>{p}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          <div className="grid gap-3">
+            {filteredLoopholes.map((item) => (
+              <div
+                key={item.id}
+                className={`bg-glm-card border rounded-xl p-4 ${
+                  item.used ? "border-glm-danger/40" : "border-glm-success/30"
+                }`}
+              >
+                <div className="flex flex-wrap items-start justify-between gap-2 mb-2">
+                  <div>
+                    <h4 className="font-medium">{item.name}</h4>
+                    <p className="text-xs text-glm-muted font-mono">{item.id}</p>
+                  </div>
+                  <span
+                    className={`text-xs px-2 py-1 rounded-full font-mono shrink-0 ${
+                      item.used
+                        ? "bg-glm-danger/20 text-glm-danger"
+                        : "bg-glm-success/20 text-glm-success"
+                    }`}
+                  >
+                    used: {String(item.used)}
+                  </span>
+                </div>
+                <p className="text-sm text-glm-muted mb-2">{item.description}</p>
+                {item.category_label && (
+                  <p className="text-xs text-glm-muted mb-1">Category: {item.category_label}</p>
+                )}
+                {item.files && item.files.length > 0 && (
+                  <p className="text-[10px] font-mono text-glm-muted truncate">
+                    {item.files.join(" · ")}
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>
