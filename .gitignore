@@ -13,6 +13,7 @@ venv/
 # Build outputs
 frontend/dist/
 dist/
+release/
 *.tsbuildinfo
 
 # IDE / OS

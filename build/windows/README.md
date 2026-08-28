@@ -1,24 +1,24 @@
-# Windows builds (Cloud Agent note)
+# Windows builds — local PC first
 
-Cursor **managed** Cloud Agent VMs run Linux only. Native Windows `.exe` builds require one of:
-
-## Option A — GitHub Actions (recommended)
-
-Every push to `main` runs `.github/workflows/build-windows.yml` on `windows-latest`.
-Download the **GLM-5.1-UI-windows** artifact from the Actions tab.
-
-## Option B — My Machines (local Windows PC)
-
-1. PowerShell: `irm 'https://cursor.com/install?win32=true' | iex`
-2. Run: `agent worker start`
-3. Start a new agent and pick your Windows machine in the environment dropdown.
-4. Run: `build\windows\build.bat`
-
-## Option C — Build locally on Windows
+**Build and run on your Windows PC** — see [WINDOWS.md](../WINDOWS.md) in the repo root.
 
 ```bat
-build\windows\build.bat
+setup-windows.bat
+build-windows.bat
 dist\GLM-5.1-UI\GLM-5.1-UI.exe
 ```
 
-The Linux Cloud Agent environment (`.cursor/environment.json`) is for backend/frontend dev and CI prep — not for producing the Windows binary directly.
+## Optional: CI build
+
+GitHub Actions can also build on `windows-latest` (`.github/workflows/build-windows.yml`). Download **GLM-5.1-UI-windows** from the Actions tab if you prefer not to build locally.
+
+## Cursor agents on your PC
+
+Use **My Machines** so agents execute on your Windows box:
+
+```powershell
+irm 'https://cursor.com/install?win32=true' | iex
+agent worker start
+```
+
+Pick your machine at [cursor.com/agents](https://cursor.com/agents).
