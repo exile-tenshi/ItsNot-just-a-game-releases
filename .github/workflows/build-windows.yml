@@ -1,0 +1,62 @@
+name: Build Windows EXE
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build frontend
+        working-directory: frontend
+        run: npm run build
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt
+          pip install -r build/requirements-build.txt
+
+      - name: Build Windows executable
+        run: python -m PyInstaller build/windows/GLM-UI.spec --noconfirm --clean
+
+      - name: Upload Windows build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: GLM-5.1-UI-windows
+          path: dist/GLM-5.1-UI/
+          retention-days: 90
+
+      - name: Create release zip on tag
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          Compress-Archive -Path dist/GLM-5.1-UI/* -DestinationPath GLM-5.1-UI-windows.zip
+
+      - name: Upload release asset
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: actions/upload-artifact@v4
+        with:
+          name: GLM-5.1-UI-windows-release-zip
+          path: GLM-5.1-UI-windows.zip
+          retention-days: 90

@@ -48,6 +48,20 @@ chmod +x start.sh && ./start.sh
 
 Open **http://localhost:8000** → **Agent** tab
 
+## Windows desktop (.exe)
+
+Build a standalone Windows app (no separate Python install needed for end users):
+
+```bat
+build\windows\build.bat
+```
+
+Run: `dist\GLM-5.1-UI\GLM-5.1-UI.exe` — opens your browser automatically at `http://127.0.0.1:8000`.
+
+**CI builds:** Every push to `main` produces a Windows artifact via GitHub Actions (`.github/workflows/build-windows.yml`). Download **GLM-5.1-UI-windows** from the latest workflow run.
+
+Requirements to **build** on Windows: Python 3.11+, Node.js 20+, then Ollama for local models.
+
 ## Features (Cursor parity)
 
 | Feature | Tool / Tab |

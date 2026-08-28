@@ -88,7 +88,7 @@ export function TerminalPanel() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-6 flex flex-col h-[calc(100vh-4.5rem)]">
+    <div className="max-w-5xl mx-auto px-4 py-6 flex flex-col h-[calc(100dvh-3.5rem)] lg:h-[100dvh]">
       <div className="mb-4">
         <h2 className="text-2xl font-semibold">Terminal & Scripts</h2>
         <p className="text-sm text-glm-muted mt-1">
