@@ -8,6 +8,25 @@
 
 body {
   min-height: 100vh;
+  background-color: #060a12;
+}
+
+@layer utilities {
+  .glass-panel {
+    @apply border border-white/[0.08] bg-glm-surface/75 backdrop-blur-xl shadow-glm-card;
+  }
+
+  .glass-input {
+    @apply rounded-xl border border-glm-border/80 bg-glm-card/80 px-4 py-3 text-sm backdrop-blur-sm transition-all placeholder:text-glm-muted focus:border-glm-accent/50 focus:outline-none focus:ring-2 focus:ring-glm-accent/30;
+  }
+
+  .text-gradient {
+    @apply bg-gradient-to-r from-white via-sky-100 to-glm-accent2 bg-clip-text text-transparent;
+  }
+
+  .chip-suggestion {
+    @apply rounded-xl border border-glm-border/70 bg-glm-card/60 px-3 py-2 text-xs text-glm-muted backdrop-blur-sm transition-all hover:border-glm-accent/60 hover:bg-glm-accent/10 hover:text-white;
+  }
 }
 
 ::-webkit-scrollbar {
@@ -16,11 +35,11 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #111827;
+  background: #0d1420;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #2a3548;
+  background: linear-gradient(180deg, #2a3548, #3b9eff44);
   border-radius: 4px;
 }
 

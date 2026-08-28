@@ -9,6 +9,7 @@ import { PCBuilderPanel } from "./components/PCBuilderPanel";
 import { CreationPanel } from "./components/CreationPanel";
 import { GameStudioPanel } from "./components/GameStudioPanel";
 import { TerminalPanel } from "./components/TerminalPanel";
+import { AmbientBackground } from "./components/ui/AmbientBackground";
 import type { AppSettings, TabId } from "./types";
 import { DEFAULT_SETTINGS, syncExternalAccess } from "./types";
 
@@ -39,9 +40,10 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-glm-bg">
+    <div className="relative min-h-screen text-white">
+      <AmbientBackground />
       <Header activeTab={activeTab} onTabChange={setActiveTab} />
-      <main>
+      <main className="relative animate-fade-up">
         {activeTab === "agent" && <AgentPanel settings={settings} />}
         {activeTab === "chat" && <ChatPanel settings={settings} />}
         {activeTab === "terminal" && <TerminalPanel />}

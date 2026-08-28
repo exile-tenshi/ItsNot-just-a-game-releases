@@ -40,6 +40,24 @@ ollama pull qwen2.5-coder:14b
 
 Configs: `config/agent-training.json`, `config/model-quality.json`
 
+## Windows desktop app (.exe)
+
+Build a portable Windows app that launches the server and opens your browser automatically.
+
+### Build locally (Windows)
+
+```bat
+scripts\build-windows.bat
+```
+
+Output: `dist\GLM-5.1-UI\GLM-5.1-UI.exe` — double-click to run.
+
+**Requirements:** Python 3.11+, Node.js 20+, Ollama (for local AI).
+
+### CI build (GitHub Actions)
+
+Every push to `main` triggers `.github/workflows/build-windows.yml`. Download the artifact **GLM-5.1-UI-Windows** or **GLM-5.1-UI-Windows-zip** from the Actions tab.
+
 ## Quick start
 
 ```bash

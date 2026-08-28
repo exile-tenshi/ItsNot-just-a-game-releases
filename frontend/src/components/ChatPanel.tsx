@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import type { AppSettings, Message } from "../types";
 import { apiContext, apiFetch } from "../types";
+import { GlassCard, PrimaryButton } from "./ui/GlassCard";
 
 interface ChatPanelProps {
   settings: AppSettings;
@@ -129,34 +130,36 @@ export function ChatPanel({ settings }: ChatPanelProps) {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-4.5rem)] max-w-4xl mx-auto w-full">
-      <div className="flex-1 overflow-y-auto px-4 py-6 space-y-4">
+    <div className="mx-auto flex h-[calc(100vh-5.5rem)] w-full max-w-4xl flex-col">
+      <div className="flex-1 space-y-4 overflow-y-auto px-4 py-6">
         {messages.length === 0 && (
-          <div className="text-center py-16">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-glm-card border border-glm-border flex items-center justify-center text-2xl">
-              🤖
-            </div>
-            <h2 className="text-xl font-semibold mb-2">Local AI — unlimited usage</h2>
-            <p className="text-glm-muted text-sm max-w-md mx-auto">
-              Runs entirely on your PC via Ollama. No API keys, no cloud, no usage caps. Use Chat
-              for anything or the PC Builder tab for gaming rig recommendations.
-            </p>
-            <div className="mt-6 flex flex-wrap justify-center gap-2">
-              {[
-                "Best GPU for 1440p 240Hz under $600",
-                "Compare Intel vs AMD for gaming in 2026",
-                "How much RAM for AAA gaming?",
-              ].map((suggestion) => (
-                <button
-                  key={suggestion}
-                  type="button"
-                  onClick={() => setInput(suggestion)}
-                  className="text-xs px-3 py-2 rounded-lg border border-glm-border bg-glm-card text-glm-muted hover:text-white hover:border-glm-accent transition-colors"
-                >
-                  {suggestion}
-                </button>
-              ))}
-            </div>
+          <div className="py-16 text-center">
+            <GlassCard glow className="mx-auto max-w-lg p-8">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-glm-accent/30 to-glm-accent2/30 text-3xl ring-1 ring-white/10">
+                💬
+              </div>
+              <h2 className="mb-2 text-2xl font-semibold text-gradient">Local AI — unlimited usage</h2>
+              <p className="mx-auto max-w-md text-sm leading-relaxed text-glm-muted">
+                Runs entirely on your PC via Ollama. No API keys, no cloud, no usage caps. Use Chat
+                for anything or the PC Builder tab for gaming rig recommendations.
+              </p>
+              <div className="mt-6 flex flex-wrap justify-center gap-2">
+                {[
+                  "Best GPU for 1440p 240Hz under $600",
+                  "Compare Intel vs AMD for gaming in 2026",
+                  "How much RAM for AAA gaming?",
+                ].map((suggestion) => (
+                  <button
+                    key={suggestion}
+                    type="button"
+                    onClick={() => setInput(suggestion)}
+                    className="chip-suggestion"
+                  >
+                    {suggestion}
+                  </button>
+                ))}
+              </div>
+            </GlassCard>
           </div>
         )}
 
@@ -166,21 +169,21 @@ export function ChatPanel({ settings }: ChatPanelProps) {
             className={`flex gap-3 ${msg.role === "user" ? "justify-end" : "justify-start"}`}
           >
             {msg.role !== "user" && (
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-glm-accent to-glm-accent2 flex items-center justify-center text-xs font-bold shrink-0">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-glm-accent to-glm-accent2 text-xs font-bold shadow-glm-glow">
                 AI
               </div>
             )}
             <div
               className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
                 msg.role === "user"
-                  ? "bg-glm-accent text-white rounded-br-md"
-                  : "bg-glm-card border border-glm-border text-gray-100 rounded-bl-md"
+                  ? "rounded-br-md bg-gradient-to-br from-glm-accent to-sky-500 text-white shadow-glm-glow"
+                  : "rounded-bl-md border border-white/[0.08] bg-glm-card/70 text-gray-100 backdrop-blur-sm"
               }`}
             >
               <p className="whitespace-pre-wrap">{msg.content}</p>
             </div>
             {msg.role === "user" && (
-              <div className="w-8 h-8 rounded-lg bg-glm-border flex items-center justify-center text-xs shrink-0">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/[0.08] text-xs ring-1 ring-white/10">
                 You
               </div>
             )}
@@ -189,31 +192,31 @@ export function ChatPanel({ settings }: ChatPanelProps) {
 
         {loading && (
           <div className="flex gap-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-glm-accent to-glm-accent2 flex items-center justify-center text-xs font-bold">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-glm-accent to-glm-accent2 text-xs font-bold shadow-glm-glow">
               AI
             </div>
-            <div className="bg-glm-card border border-glm-border rounded-2xl rounded-bl-md px-4 py-3">
+            <div className="rounded-2xl rounded-bl-md border border-white/[0.08] bg-glm-card/70 px-4 py-3 backdrop-blur-sm">
               <div className="flex gap-1">
-                <span className="w-2 h-2 bg-glm-accent rounded-full animate-bounce" />
-                <span className="w-2 h-2 bg-glm-accent rounded-full animate-bounce [animation-delay:0.15s]" />
-                <span className="w-2 h-2 bg-glm-accent rounded-full animate-bounce [animation-delay:0.3s]" />
+                <span className="h-2 w-2 animate-bounce rounded-full bg-glm-accent" />
+                <span className="h-2 w-2 animate-bounce rounded-full bg-glm-accent [animation-delay:0.15s]" />
+                <span className="h-2 w-2 animate-bounce rounded-full bg-glm-accent [animation-delay:0.3s]" />
               </div>
             </div>
           </div>
         )}
 
         {error && (
-          <div className="mx-auto max-w-lg p-4 rounded-xl border border-glm-danger/50 bg-glm-danger/10 text-sm text-glm-danger">
-            <p className="font-semibold mb-1">Request failed</p>
-            <pre className="text-xs whitespace-pre-wrap font-mono opacity-90">{error}</pre>
+          <div className="mx-auto max-w-lg rounded-xl border border-glm-danger/50 bg-glm-danger/10 p-4 text-sm text-glm-danger">
+            <p className="mb-1 font-semibold">Request failed</p>
+            <pre className="whitespace-pre-wrap font-mono text-xs opacity-90">{error}</pre>
           </div>
         )}
 
         <div ref={bottomRef} />
       </div>
 
-      <div className="border-t border-glm-border bg-glm-surface/90 backdrop-blur p-4">
-        <div className="flex gap-3 items-end">
+      <div className="border-t border-white/[0.06] bg-glm-surface/80 p-4 backdrop-blur-xl">
+        <div className="flex items-end gap-3">
           <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -225,18 +228,13 @@ export function ChatPanel({ settings }: ChatPanelProps) {
             }}
             placeholder="Message GLM-5.1…"
             rows={2}
-            className="flex-1 resize-none rounded-xl bg-glm-card border border-glm-border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-glm-accent/50 placeholder:text-glm-muted"
+            className="glass-input flex-1 resize-none"
           />
-          <button
-            type="button"
-            onClick={handleSend}
-            disabled={loading || !input.trim()}
-            className="px-5 py-3 rounded-xl bg-gradient-to-r from-glm-accent to-glm-accent2 font-semibold text-sm disabled:opacity-40 disabled:cursor-not-allowed hover:shadow-lg hover:shadow-glm-accent/25 transition-all shrink-0"
-          >
+          <PrimaryButton onClick={handleSend} disabled={loading || !input.trim()} className="shrink-0">
             Send
-          </button>
+          </PrimaryButton>
         </div>
-        <p className="text-xs text-glm-muted mt-2 text-center">
+        <p className="mt-2 text-center text-xs text-glm-muted">
           Local mode — unlimited messages · External connections off until approved in Settings
         </p>
       </div>

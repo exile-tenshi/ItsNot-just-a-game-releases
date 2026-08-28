@@ -111,10 +111,10 @@ export function PCBuilderPanel({ settings }: PCBuilderPanelProps) {
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-6">
-      <div className="mb-6">
-        <h2 className="text-2xl font-semibold">Gaming PC Builder</h2>
-        <p className="text-glm-muted text-sm mt-1">
+    <div className="mx-auto max-w-6xl px-4 py-6">
+      <div className="mb-8">
+        <h2 className="text-3xl font-semibold text-gradient">Gaming PC Builder</h2>
+        <p className="mt-2 max-w-2xl text-sm leading-relaxed text-glm-muted">
           Unlimited local builds — from budget 1080p to no-compromise 4K enthusiast rigs. Runs
           entirely on your PC.
         </p>
