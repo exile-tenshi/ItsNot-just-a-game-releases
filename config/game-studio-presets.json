@@ -1,0 +1,79 @@
+{
+  "version": "1.0.0",
+  "genres": [
+    { "id": "open-world", "label": "Open World", "icon": "🌍" },
+    { "id": "fps", "label": "First-Person Shooter", "icon": "🔫" },
+    { "id": "rpg", "label": "RPG / Adventure", "icon": "⚔️" },
+    { "id": "racing", "label": "Racing", "icon": "🏎️" },
+    { "id": "platformer", "label": "Platformer", "icon": "🎮" },
+    { "id": "multiplayer-arena", "label": "Multiplayer Arena", "icon": "👥" },
+    { "id": "survival", "label": "Survival", "icon": "🏕️" },
+    { "id": "sandbox", "label": "Sandbox / Creative", "icon": "🧱" }
+  ],
+  "dimensions": [
+    { "id": "3d", "label": "3D (Three.js)", "engine": "threejs" },
+    { "id": "2d", "label": "2D (Canvas)", "engine": "canvas2d" }
+  ],
+  "presets": [
+    {
+      "id": "open-world-rpg",
+      "name": "Open World RPG",
+      "genre": "open-world",
+      "dimension": "3d",
+      "features": ["inventory", "quests", "combat", "npcs", "day-night", "save-system"],
+      "includes": ["terrain", "roads", "map", "characters", "multiplayer-ready"],
+      "prompt": "Create a full open-world 3D RPG from scratch: terrain with hills and biomes, road network between towns, playable hero character with stats, NPCs, inventory and quest systems, third-person camera, and multiplayer-ready WebSocket foundation. Generate all game files under games/open-world-rpg."
+    },
+    {
+      "id": "fps-multiplayer",
+      "name": "Multiplayer FPS Arena",
+      "genre": "fps",
+      "dimension": "3d",
+      "features": ["multiplayer", "weapons", "health", "respawn", "scoreboard"],
+      "includes": ["arena-map", "characters", "multiplayer-server"],
+      "prompt": "Create a multiplayer FPS arena from scratch: flat combat map with cover, two team spawn points, weapon and health gameplay, real-time multiplayer via WebSocket server, and browser Three.js client. Full project in games/fps-arena."
+    },
+    {
+      "id": "racing-track",
+      "name": "3D Racing Game",
+      "genre": "racing",
+      "dimension": "3d",
+      "features": ["vehicles", "lap-counter", "checkpoints", "physics"],
+      "includes": ["terrain", "roads", "track-map"],
+      "prompt": "Create a 3D racing game: procedural track as road spline on terrain, car controller with physics feel, lap timing, checkpoints, and textured ground. Project in games/racing-track."
+    },
+    {
+      "id": "sandbox-creative",
+      "name": "Sandbox Creative",
+      "genre": "sandbox",
+      "dimension": "3d",
+      "features": ["build-mode", "place-blocks", "terrain-edit", "multiplayer"],
+      "includes": ["terrain", "voxel-style", "multiplayer"],
+      "prompt": "Create a Minecraft-style sandbox: editable voxel terrain, place/remove blocks, multiplayer sync, character controller, day-night cycle. games/sandbox-world."
+    }
+  ],
+  "quick_prompts": [
+    "Create a 3D game from scratch with hero, enemies, terrain, and quests",
+    "Add a multiplayer server and sync player positions",
+    "Generate a 256x256 terrain with forests, roads, and a spawn town",
+    "Create 3D character models and textures for the party",
+    "Build an FPS map with cover and team spawns"
+  ],
+  "capability_areas": [
+    "characters",
+    "gameplay",
+    "multiplayer",
+    "3d-models",
+    "texturing",
+    "images",
+    "foundation",
+    "terrain",
+    "roads",
+    "maps",
+    "audio",
+    "ui",
+    "physics",
+    "ai-npcs",
+    "save-load"
+  ]
+}

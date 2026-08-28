@@ -1,0 +1,50 @@
+{
+  "version": "2.0.0",
+  "mode": "hybrid",
+  "description": "Runs on your PC with optional internet — full coding agent like Cursor",
+  "requires_api_key": false,
+  "requires_internet": false,
+  "internet": {
+    "enabled": false,
+    "web_search": false,
+    "fetch_urls": false,
+    "cloud_providers": false,
+    "requires_user_approval": true,
+    "note": "Off by default — user must enable in Settings to allow web search, URL fetch, or cloud AI providers"
+  },
+  "inference": {
+    "provider": "ollama",
+    "base_url": "http://127.0.0.1:11434/v1",
+    "api_key": "local",
+    "preferred_models": [
+      "qwen2.5-coder:14b",
+      "qwen2.5:14b",
+      "deepseek-coder-v2:16b",
+      "glm-5.1",
+      "glm4",
+      "llama3.1:70b",
+      "llama3.1:8b"
+    ],
+    "fallback_model": "qwen2.5-coder:14b",
+    "auto_detect_model": true
+  },
+  "usage_limits": {
+    "enabled": false,
+    "max_requests_per_minute": 999999,
+    "max_requests_per_hour": 9999999,
+    "max_tokens_per_request": 131072,
+    "max_concurrent_streams": 32,
+    "daily_message_cap": null,
+    "note": "No artificial caps — local or cloud, limited by your hardware or provider quota"
+  },
+  "coding_agent": {
+    "enabled": true,
+    "config": "config/coding-agent.json"
+  },
+  "restriction_guard": {
+    "default_mode": "disabled",
+    "note": "Cloud subscription rules do not apply to local inference; safety guard can be re-enabled in Settings"
+  },
+  "serve_ui_from_backend": true,
+  "default_port": 8000
+}

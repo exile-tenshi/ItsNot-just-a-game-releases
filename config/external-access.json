@@ -1,0 +1,21 @@
+{
+  "version": "1.0.0",
+  "description": "External connection policy — nothing reaches outside this PC unless the user explicitly approves in Settings.",
+  "default_internet_enabled": false,
+  "requires_user_approval": true,
+  "local_always_allowed": {
+    "ollama": "http://127.0.0.1:11434/v1",
+    "localhost_hosts": ["127.0.0.1", "localhost", "[::1]"],
+    "run_terminal": true,
+    "run_script": true
+  },
+  "blocked_without_approval": [
+    "web_search",
+    "fetch_url",
+    "cloud_inference",
+    "zai_api",
+    "openai_api",
+    "openrouter_api"
+  ],
+  "approval_method": "Settings checkbox → synced to POST /api/external-access and sent on every API request as internet_enabled"
+}

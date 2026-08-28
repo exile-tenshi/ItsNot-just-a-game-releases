@@ -1,0 +1,315 @@
+import { useEffect, useState, type ReactNode } from "react";
+import type { AppSettings, LocalStatus, ProviderId } from "../types";
+import { DEFAULT_SETTINGS, PROVIDERS, apiContext, apiFetch } from "../types";
+
+interface SettingsPanelProps {
+  settings: AppSettings;
+  onChange: (settings: AppSettings) => void;
+}
+
+export function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
+  const [verifyStatus, setVerifyStatus] = useState<string | null>(null);
+  const [verifying, setVerifying] = useState(false);
+  const [localStatus, setLocalStatus] = useState<LocalStatus | null>(null);
+
+  useEffect(() => {
+    apiFetch<LocalStatus>("/api/local/status").then(setLocalStatus).catch(() => {});
+  }, [verifyStatus]);
+
+  const update = <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => {
+    onChange({ ...settings, [key]: value });
+  };
+
+  const verifyConnection = async () => {
+    setVerifying(true);
+    setVerifyStatus(null);
+    try {
+      const result = await apiFetch<{ valid: boolean; error?: string; sample?: string }>(
+        "/api/verify-key",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ...apiContext(settings),
+          }),
+        },
+      );
+      if (result.valid) {
+        setVerifyStatus(`Connected — model responded: ${result.sample || "OK"}`);
+      } else {
+        setVerifyStatus(`Not connected: ${result.error || "unknown error"}`);
+      }
+    } catch (e) {
+      setVerifyStatus(`Not connected: ${e instanceof Error ? e.message : String(e)}`);
+    } finally {
+      setVerifying(false);
+    }
+  };
+
+  const applyDetectedModel = () => {
+    const active = localStatus?.inference.active_model;
+    if (active) onChange({ ...settings, model: active });
+  };
+
+  const applyProvider = (id: ProviderId) => {
+    const p = PROVIDERS[id];
+    if (id !== "local" && !settings.internetEnabled) {
+      const ok = window.confirm(
+        "Cloud AI providers connect to external servers. Enable internet access to approve external connections?",
+      );
+      if (!ok) return;
+      onChange({
+        ...settings,
+        provider: id,
+        baseUrl: p.baseUrl,
+        model: p.model,
+        apiKey: p.apiKey || settings.apiKey,
+        localMode: false,
+        internetEnabled: true,
+      });
+      return;
+    }
+    onChange({
+      ...settings,
+      provider: id,
+      baseUrl: p.baseUrl,
+      model: p.model,
+      apiKey: p.apiKey || settings.apiKey,
+      localMode: id === "local",
+    });
+  };
+
+  const setInternetEnabled = (enabled: boolean) => {
+    if (!enabled && settings.provider !== "local") {
+      const local = PROVIDERS.local;
+      onChange({
+        ...settings,
+        internetEnabled: false,
+        provider: "local",
+        baseUrl: local.baseUrl,
+        model: local.model,
+        apiKey: local.apiKey,
+        localMode: true,
+      });
+      return;
+    }
+    update("internetEnabled", enabled);
+  };
+
+  return (
+    <div className="max-w-2xl mx-auto px-4 py-6">
+      <h2 className="text-2xl font-semibold mb-2">Settings</h2>
+      <p className="text-glm-muted text-sm mb-6">
+        Local Ollama runs fully offline on this PC. External connections (web search, URL fetch, cloud
+        AI) are blocked until you approve them below.
+      </p>
+
+      {localStatus && (
+        <div
+          className={`mb-6 p-4 rounded-xl border ${
+            localStatus.ready
+              ? "border-glm-success/40 bg-glm-success/5"
+              : "border-glm-warn/40 bg-glm-warn/5"
+          }`}
+        >
+          <p className="font-semibold text-sm mb-1">
+            {localStatus.ready ? "Local inference ready" : "Ollama not detected"}
+          </p>
+          {localStatus.ready ? (
+            <p className="text-xs text-glm-muted">
+              Models: {localStatus.inference.ollama.models.slice(0, 5).join(", ") || "none"}
+              {localStatus.inference.ollama.models.length > 5 ? "…" : ""}
+            </p>
+          ) : (
+            <p className="text-xs text-glm-muted">
+              {localStatus.setup_hint ||
+                "Install Ollama from ollama.com, then run: ollama pull llama3.1:8b"}
+            </p>
+          )}
+          {localStatus.usage_limits?.note && (
+            <p className="text-xs text-glm-accent2 mt-2">{localStatus.usage_limits.note}</p>
+          )}
+        </div>
+      )}
+
+      <div className="space-y-5">
+        <Field label="AI Provider">
+          <div className="grid grid-cols-2 gap-2">
+            {(Object.keys(PROVIDERS) as ProviderId[]).map((id) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => applyProvider(id)}
+                className={`px-3 py-2 rounded-lg text-sm border transition-colors ${
+                  settings.provider === id
+                    ? "border-glm-accent bg-glm-accent/20 text-white"
+                    : "border-glm-border text-glm-muted hover:text-white"
+                }`}
+              >
+                {PROVIDERS[id].label}
+              </button>
+            ))}
+          </div>
+        </Field>
+
+        <div className="rounded-xl border border-glm-border bg-glm-card p-4">
+          <label className="flex items-start gap-3 text-sm cursor-pointer">
+            <input
+              type="checkbox"
+              checked={settings.internetEnabled}
+              onChange={(e) => setInternetEnabled(e.target.checked)}
+              className="rounded border-glm-border mt-0.5"
+            />
+            <span>
+              <span className="font-medium block">Allow external connections</span>
+              <span className="text-xs text-glm-muted">
+                Required for web search, fetch URL, and cloud providers (Z.AI, OpenAI, OpenRouter).
+                Local Ollama works without this.
+              </span>
+            </span>
+          </label>
+        </div>
+
+        <Field label="Local server URL" hint="Ollama OpenAI-compatible endpoint (default)">
+          <input
+            type="text"
+            value={settings.baseUrl}
+            onChange={(e) => update("baseUrl", e.target.value)}
+            className="w-full rounded-xl bg-glm-bg border border-glm-border px-4 py-2.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-glm-accent/50"
+          />
+        </Field>
+
+        <Field label="Model" hint="Any model installed in Ollama on this PC">
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={settings.model}
+              onChange={(e) => update("model", e.target.value)}
+              className="flex-1 rounded-xl bg-glm-bg border border-glm-border px-4 py-2.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-glm-accent/50"
+            />
+            {localStatus?.inference.active_model && (
+              <button
+                type="button"
+                onClick={applyDetectedModel}
+                className="px-3 py-2 rounded-lg border border-glm-border text-xs hover:bg-glm-card"
+              >
+                Use detected
+              </button>
+            )}
+          </div>
+        </Field>
+
+        <Field label="API key" hint="Not required for local Ollama — leave as 'local'">
+          <input
+            type="text"
+            value={settings.apiKey}
+            onChange={(e) => update("apiKey", e.target.value)}
+            placeholder="local"
+            className="w-full rounded-xl bg-glm-bg border border-glm-border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-glm-accent/50"
+          />
+        </Field>
+
+        <Field label="System prompt">
+          <textarea
+            value={settings.systemPrompt}
+            onChange={(e) => update("systemPrompt", e.target.value)}
+            rows={3}
+            className="w-full rounded-xl bg-glm-bg border border-glm-border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-glm-accent/50 resize-none"
+          />
+        </Field>
+
+        <div className="grid grid-cols-2 gap-4">
+          <Field label={`Temperature (${settings.temperature})`}>
+            <input
+              type="range"
+              min={0.01}
+              max={1}
+              step={0.01}
+              value={settings.temperature}
+              onChange={(e) => update("temperature", parseFloat(e.target.value))}
+              className="w-full"
+            />
+          </Field>
+
+          <Field label="Max tokens (optional)">
+            <input
+              type="number"
+              value={settings.maxTokens ?? ""}
+              onChange={(e) =>
+                update("maxTokens", e.target.value ? parseInt(e.target.value, 10) : null)
+              }
+              placeholder="No limit"
+              className="w-full rounded-xl bg-glm-bg border border-glm-border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-glm-accent/50"
+            />
+          </Field>
+        </div>
+
+        <label className="flex items-center gap-2 text-sm cursor-pointer">
+          <input
+            type="checkbox"
+            checked={settings.stream}
+            onChange={(e) => update("stream", e.target.checked)}
+            className="rounded border-glm-border"
+          />
+          Stream responses
+        </label>
+
+        <div className="flex gap-3 pt-2">
+          <button
+            type="button"
+            onClick={verifyConnection}
+            disabled={verifying}
+            className="px-4 py-2 rounded-lg border border-glm-border text-sm hover:bg-glm-card transition-colors disabled:opacity-50"
+          >
+            {verifying ? "Checking…" : "Test local connection"}
+          </button>
+          <button
+            type="button"
+            onClick={() => onChange({ ...DEFAULT_SETTINGS })}
+            className="px-4 py-2 rounded-lg border border-glm-border text-sm text-glm-muted hover:text-white transition-colors"
+          >
+            Reset defaults
+          </button>
+        </div>
+
+        {verifyStatus && <p className="text-sm font-mono text-glm-muted">{verifyStatus}</p>}
+      </div>
+
+      <div className="mt-8 p-4 rounded-xl border border-glm-border bg-glm-card text-sm">
+        <h3 className="font-semibold mb-2">Coding agent tools (like Cursor)</h3>
+        <ul className="text-xs text-glm-muted space-y-1 list-disc pl-4">
+          <li>read_file / write_file / edit_file — file operations</li>
+          <li>search_codebase — regex search across project</li>
+          <li>run_terminal / run_script — shell commands and .py/.sh/.js/.ts scripts (local, always on)</li>
+          <li>web_search / fetch_url — requires external connection approval in Settings</li>
+          <li>git_status / git_diff / git_log — version control</li>
+        </ul>
+      </div>
+
+      <div className="mt-4 p-4 rounded-xl border border-glm-border bg-glm-card text-sm">
+        <h3 className="font-semibold mb-2">One-time setup (this PC only)</h3>
+        <pre className="text-xs font-mono text-glm-muted overflow-x-auto whitespace-pre-wrap">
+{`# 1. Install Ollama — https://ollama.com
+# 2. Pull a model (pick one):
+ollama pull llama3.1:8b
+ollama pull qwen2.5:14b
+
+# 3. Start this app:
+./start.sh
+
+# Open http://localhost:8000 — unlimited local usage`}
+        </pre>
+      </div>
+    </div>
+  );
+}
+
+function Field({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
+  return (
+    <div>
+      <label className="block text-sm font-medium mb-1">{label}</label>
+      {hint && <p className="text-xs text-glm-muted mb-2">{hint}</p>}
+      {children}
+    </div>
+  );
+}

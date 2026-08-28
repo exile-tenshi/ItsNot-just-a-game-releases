@@ -1,0 +1,422 @@
+{
+  "version": "1.0.0",
+  "description": "Every known bypass, enforcement gap, and policy loophole in GLM-5.1 UI. used=true means the loophole is currently active or available in the default deployment; used=false means it exists but is off, closed, or not applicable by default.",
+  "audited_at": "2026-08-28",
+  "legend": {
+    "used": "true = loophole is in effect or callable right now with default settings",
+    "used_false": "false = loophole exists as an option but is disabled, blocked, or not reachable by default"
+  },
+  "summary": {
+    "total_loopholes": 50,
+    "used_true": 42,
+    "used_false": 8
+  },
+  "categories": {
+    "restriction_guard": {
+      "label": "Restriction guard bypasses",
+      "loopholes": [
+        {
+          "id": "restriction_guard_disabled_by_default",
+          "name": "Guard disabled on startup",
+          "description": "RestrictionGuard.check() returns allowed immediately when mode is disabled. Default is disabled in config/local.json and .env.example.",
+          "used": true,
+          "files": ["config/local.json", ".env.example", "backend/config.py", "backend/restriction_guard.py"]
+        },
+        {
+          "id": "restriction_guard_log_only_mode",
+          "name": "Log-only guard mode",
+          "description": "Violations are logged but allowed=true is forced. Callable via POST /api/guard/mode or Restrictions tab.",
+          "used": false,
+          "files": ["backend/restriction_guard.py", "backend/main.py", "frontend/src/components/RestrictionsPanel.tsx"]
+        },
+        {
+          "id": "skip_guard_api_flag",
+          "name": "skip_guard on chat API",
+          "description": "ChatRequest.skip_guard=true bypasses the guard even when mode is enforce.",
+          "used": true,
+          "files": ["backend/main.py"]
+        },
+        {
+          "id": "guard_mode_runtime_disable_api",
+          "name": "Runtime guard disable (no auth)",
+          "description": "POST /api/guard/mode can set disabled or log_only without authentication.",
+          "used": true,
+          "files": ["backend/main.py", "frontend/src/components/RestrictionsPanel.tsx"]
+        },
+        {
+          "id": "agent_mode_skips_restriction_guard",
+          "name": "Agent endpoint unguarded",
+          "description": "/api/agent/run never calls guard.check(). Primary Agent tab uses this path.",
+          "used": true,
+          "files": ["backend/main.py", "backend/agent.py", "frontend/src/components/AgentPanel.tsx"]
+        },
+        {
+          "id": "pc_builder_skips_restriction_guard",
+          "name": "PC Builder unguarded",
+          "description": "/api/pc-builder/build and /stream have no restriction guard.",
+          "used": true,
+          "files": ["backend/main.py", "frontend/src/components/PCBuilderPanel.tsx"]
+        },
+        {
+          "id": "direct_tools_api_skips_restriction_guard",
+          "name": "Direct tools API unguarded",
+          "description": "POST /api/tools/run executes any agent tool (terminal, write_file, web_search) with no guard.",
+          "used": true,
+          "files": ["backend/main.py", "backend/tools.py"]
+        },
+        {
+          "id": "workspace_write_api_skips_restriction_guard",
+          "name": "Direct workspace write unguarded",
+          "description": "POST /api/workspace/file writes files with no restriction guard.",
+          "used": true,
+          "files": ["backend/main.py", "backend/workspace.py"]
+        },
+        {
+          "id": "verify_api_skips_restriction_guard",
+          "name": "Verify API unguarded",
+          "description": "POST /api/verify/run runs checkers with no guard or auth.",
+          "used": true,
+          "files": ["backend/main.py", "backend/code_checker.py"]
+        },
+        {
+          "id": "guard_keyword_only_matching",
+          "name": "Keyword-only guard (evasion)",
+          "description": "Guard uses order-independent substring keyword matching only. Paraphrasing, synonyms, or other languages can evade blocks.",
+          "used": true,
+          "files": ["backend/restriction_guard.py", "restrictions/not-allowed.json"]
+        },
+        {
+          "id": "guard_checks_last_user_message_only",
+          "name": "Single-message guard scope",
+          "description": "Chat endpoints only check the last user message, not system prompts or full conversation history.",
+          "used": true,
+          "files": ["backend/main.py"]
+        },
+        {
+          "id": "restrictions_test_guard_mode_not_auto_applied",
+          "name": "Test config guard_mode ignored",
+          "description": "restrictions-test.json specifies guard_mode enforce but runtime uses whatever mode is currently set.",
+          "used": true,
+          "files": ["config/restrictions-test.json", "backend/main.py"]
+        }
+      ]
+    },
+    "local_and_usage": {
+      "label": "Local mode, API keys, and usage limits",
+      "loopholes": [
+        {
+          "id": "local_mode_default_true",
+          "name": "Local mode default",
+          "description": "LOCAL_MODE=true by default — runs on local Ollama without cloud subscription rules.",
+          "used": true,
+          "files": ["backend/config.py", ".env.example", "config/local.json"]
+        },
+        {
+          "id": "no_api_key_required_local",
+          "name": "No API key for local inference",
+          "description": "requires_api_key is false; Ollama accepts placeholder key local.",
+          "used": true,
+          "files": ["config/local.json", "backend/local_engine.py"]
+        },
+        {
+          "id": "local_api_key_placeholder",
+          "name": "Placeholder API key accepted",
+          "description": "resolve_api_key returns local for localhost URLs without validating a real key.",
+          "used": true,
+          "files": ["backend/local_engine.py", "config/local.json"]
+        },
+        {
+          "id": "usage_limits_disabled",
+          "name": "Unlimited usage (no rate limiting)",
+          "description": "usage_limits.enabled is false and no rate-limit code exists. Documented as allowed in restrictions/allowed.json.",
+          "used": true,
+          "files": ["config/local.json", "restrictions/allowed.json"]
+        },
+        {
+          "id": "client_supplied_api_key_base_url_model",
+          "name": "Per-request provider override",
+          "description": "All endpoints accept api_key, base_url, and model from the client body, bypassing server .env.",
+          "used": true,
+          "files": ["backend/main.py", "backend/openai_client.py", "frontend/src/components/AgentPanel.tsx"]
+        },
+        {
+          "id": "requires_api_key_metadata_only",
+          "name": "Cloud requires_api_key not enforced",
+          "description": "coding-agent.json and ai-creation.json mark cloud providers as requires_api_key but backend never blocks missing keys.",
+          "used": true,
+          "files": ["config/coding-agent.json", "config/ai-creation.json", "backend/main.py"]
+        },
+        {
+          "id": "local_unlimited_usage_allowed_category",
+          "name": "Unlimited usage explicitly allowed",
+          "description": "restrictions/allowed.json includes local-unlimited-usage as an allowed category by design.",
+          "used": true,
+          "files": ["restrictions/allowed.json", "config/local.json"]
+        }
+      ]
+    },
+    "network_and_auth": {
+      "label": "Network, internet, and authentication",
+      "loopholes": [
+        {
+          "id": "internet_enabled_not_enforced_backend",
+          "name": "INTERNET_ENABLED flag unused",
+          "description": "Previously settings.internet_enabled was never checked. Now enforced via external_access gate on all outbound tools and cloud inference.",
+          "used": false,
+          "files": ["backend/external_access.py", "backend/tools.py", "backend/main.py"]
+        },
+        {
+          "id": "frontend_internet_toggle_cosmetic",
+          "name": "Frontend internet toggle cosmetic",
+          "description": "Previously stored in localStorage only. Now synced to POST /api/external-access and sent as internet_enabled on every API request.",
+          "used": false,
+          "files": ["frontend/src/App.tsx", "frontend/src/types.ts", "backend/main.py"]
+        },
+        {
+          "id": "agent_ui_hardcoded_internet_on",
+          "name": "Agent UI shows internet on always",
+          "description": "Previously hardcoded internet on. Now shows local only or internet approved from settings.",
+          "used": false,
+          "files": ["frontend/src/components/AgentPanel.tsx"]
+        },
+        {
+          "id": "requires_internet_metadata_only",
+          "name": "requires_internet not enforced",
+          "description": "Cloud provider flags still informational in JSON configs, but runtime now blocks cloud base_url without user internet approval.",
+          "used": false,
+          "files": ["config/coding-agent.json", "backend/external_access.py"]
+        },
+        {
+          "id": "cors_wildcard_local_mode",
+          "name": "CORS wildcard in local mode",
+          "description": "allow_origins includes * when local_mode is true — any origin can call the API.",
+          "used": true,
+          "files": ["backend/main.py"]
+        },
+        {
+          "id": "no_api_authentication",
+          "name": "No API authentication",
+          "description": "No auth middleware on any endpoint.",
+          "used": true,
+          "files": ["backend/main.py"]
+        },
+        {
+          "id": "host_bind_all_interfaces",
+          "name": "Bind all interfaces (0.0.0.0)",
+          "description": "HOST=0.0.0.0 in .env.example — API reachable from LAN if port is open.",
+          "used": true,
+          "files": [".env.example", "backend/config.py"]
+        },
+        {
+          "id": "fetch_url_ssrf_internal",
+          "name": "fetch_url SSRF to internal hosts",
+          "description": "fetch_url allows http/https to any host including localhost and private IPs — no blocklist.",
+          "used": true,
+          "files": ["backend/web_search.py", "backend/tools.py"]
+        },
+        {
+          "id": "web_search_unrestricted",
+          "name": "Web search unrestricted when approved",
+          "description": "web_search is blocked by default. When user approves external connections, search has no content filter (by design).",
+          "used": true,
+          "files": ["backend/web_search.py", "backend/external_access.py"]
+        }
+      ]
+    },
+    "code_verification": {
+      "label": "Zero-errors verification bypasses",
+      "loopholes": [
+        {
+          "id": "zero_errors_skipped_checkers_pass",
+          "name": "Missing checkers count as pass",
+          "description": "Uninstalled linters return passed=true with a note. If all checkers skip, zero_errors is still true.",
+          "used": true,
+          "files": ["backend/code_checker.py", "config/code-checkers.json"]
+        },
+        {
+          "id": "zero_errors_no_edits_bypass",
+          "name": "No file edits skips verify gate",
+          "description": "block_until_clean only applies when edited_files is non-empty. Agent can finish without ever running verify_code.",
+          "used": true,
+          "files": ["backend/agent.py"]
+        },
+        {
+          "id": "zero_errors_max_fix_rounds_escape",
+          "name": "Max fix rounds cap",
+          "description": "After max_fix_rounds (default 5) the agent can finish even if checkers still fail.",
+          "used": true,
+          "files": ["backend/agent.py", "config/code-checkers.json"]
+        },
+        {
+          "id": "zero_errors_keyword_regex_bypass",
+          "name": "Text-only verify claim",
+          "description": "Agent can finish if assistant text matches verify|test|pass|success|zero errors without running checkers.",
+          "used": true,
+          "files": ["backend/agent.py"]
+        },
+        {
+          "id": "zero_errors_policy_disable_config",
+          "name": "Disable auto-verify via config",
+          "description": "Setting zero_errors_policy.enabled to false in code-checkers.json disables post-edit verification.",
+          "used": false,
+          "files": ["config/code-checkers.json", "backend/agent.py"]
+        },
+        {
+          "id": "block_agent_done_disable_config",
+          "name": "Disable done-blocking via config",
+          "description": "Setting block_agent_done_until_clean to false allows agent completion with checker failures.",
+          "used": false,
+          "files": ["config/code-checkers.json", "backend/agent.py"]
+        }
+      ]
+    },
+    "terminal_and_workspace": {
+      "label": "Terminal, files, and workspace",
+      "loopholes": [
+        {
+          "id": "blocked_commands_minimal_list",
+          "name": "Minimal terminal blocklist",
+          "description": "Only 7 command patterns blocked (rm -rf /, mkfs, fork bomb, dd, shutdown, reboot, halt).",
+          "used": true,
+          "files": ["backend/tools.py"]
+        },
+        {
+          "id": "blocked_commands_substring_only",
+          "name": "Substring-only command blocking",
+          "description": "Blocklist uses substring match — variants like rm -rf ~, curl|bash, nc -e, pip install are not blocked.",
+          "used": true,
+          "files": ["backend/tools.py"]
+        },
+        {
+          "id": "shell_true_full_shell",
+          "name": "shell=True unrestricted shell",
+          "description": "run_terminal uses shell=True — pipelines, redirects, substitution, and env vars all allowed.",
+          "used": true,
+          "files": ["backend/tools.py", "backend/code_checker.py"]
+        },
+        {
+          "id": "file_delete_via_terminal",
+          "name": "Delete files via terminal",
+          "description": "coding-agent.json sets file_operations.delete false but run_terminal can rm any file in workspace.",
+          "used": true,
+          "files": ["config/coding-agent.json", "backend/tools.py"]
+        },
+        {
+          "id": "package_install_via_terminal",
+          "name": "Install packages via terminal",
+          "description": "Training says never install without asking but run_terminal allows pip install, npm install, apt, etc.",
+          "used": true,
+          "files": ["config/agent-training.json", "backend/tools.py"]
+        },
+        {
+          "id": "workspace_root_arbitrary_override",
+          "name": "Arbitrary workspace root",
+          "description": "POST /api/workspace/root sets workspace to any directory on disk with no allowlist.",
+          "used": true,
+          "files": ["backend/workspace.py", "backend/main.py"]
+        },
+        {
+          "id": "coding_agent_feature_flags_not_enforced",
+          "name": "Feature flags not enforced at runtime",
+          "description": "coding-agent.json features.*.enabled (terminal, web_search, delete, etc.) are never read — all tools always registered.",
+          "used": true,
+          "files": ["config/coding-agent.json", "backend/tools.py"]
+        },
+        {
+          "id": "workspace_path_traversal_blocked",
+          "name": "Path traversal within workspace blocked",
+          "description": "resolve_safe_path rejects paths that escape workspace root — this protection is active.",
+          "used": false,
+          "files": ["backend/workspace.py"]
+        }
+      ]
+    },
+    "agent_and_api_control": {
+      "label": "Agent loop and API control",
+      "loopholes": [
+        {
+          "id": "max_iterations_client_override",
+          "name": "Client overrides max iterations",
+          "description": "AgentRequest.max_iterations overrides the default 30 — client can set very high values.",
+          "used": true,
+          "files": ["backend/main.py", "backend/agent.py", "config/coding-agent.json"]
+        },
+        {
+          "id": "auto_index_client_disable",
+          "name": "Client can disable auto-index",
+          "description": "auto_index=false skips project brief and auto file attachment.",
+          "used": true,
+          "files": ["backend/main.py", "backend/agent.py"]
+        },
+        {
+          "id": "chat_custom_system_prompt_override",
+          "name": "Client system prompt override",
+          "description": "Frontend can inject custom systemPrompt into chat messages, prepended before backend trained prompt logic.",
+          "used": true,
+          "files": ["frontend/src/components/ChatPanel.tsx", "backend/main.py"]
+        },
+        {
+          "id": "temperature_max_tokens_client_override",
+          "name": "Client overrides temperature and tokens",
+          "description": "temperature, max_tokens, and thinking_enabled are fully client-controlled per request.",
+          "used": true,
+          "files": ["backend/main.py", "frontend/src/types.ts"]
+        },
+        {
+          "id": "restrictions_test_arbitrary_config_path",
+          "name": "Arbitrary test config path",
+          "description": "TestRunRequest.config_path can load any JSON file path from the client.",
+          "used": true,
+          "files": ["backend/main.py", "frontend/src/components/TestSuitePanel.tsx"]
+        },
+        {
+          "id": "no_request_rate_limiting",
+          "name": "No request rate limiting",
+          "description": "No throttling on chat, agent, tools, or verify endpoints.",
+          "used": true,
+          "files": ["backend/main.py", "config/local.json"]
+        },
+        {
+          "id": "thinking_mode_unrestricted",
+          "name": "Thinking mode unrestricted",
+          "description": "thinking_enabled can be toggled by client with no guard or policy check.",
+          "used": true,
+          "files": ["backend/main.py", "backend/openai_client.py"]
+        },
+        {
+          "id": "stream_endpoints_same_guard_gaps",
+          "name": "Stream endpoints share chat guard gaps",
+          "description": "/api/chat/stream uses same skip_guard and single-message guard as non-stream chat.",
+          "used": true,
+          "files": ["backend/main.py"]
+        }
+      ]
+    }
+  },
+  "closed_protections": {
+    "label": "Protections that are active (not loopholes)",
+    "items": [
+      {
+        "id": "workspace_path_traversal_blocked",
+        "name": "Path traversal blocked",
+        "used": false,
+        "note": "Listed above under terminal_and_workspace — used=false means the bypass is NOT available"
+      },
+      {
+        "id": "blocked_rm_rf_root",
+        "name": "rm -rf / blocked",
+        "used": false,
+        "note": "Specific pattern rm -rf / is blocked in run_terminal"
+      }
+    ]
+  },
+  "highest_impact_bypass_paths": [
+    "Use Agent tab — guard never runs",
+    "Guard disabled by default in local.json and .env.example",
+    "POST /api/guard/mode with disabled or log_only — no auth",
+    "POST /api/chat with skip_guard true when guard is enforce",
+    "POST /api/tools/run — direct shell, files, web with no guard",
+    "Uninstall linters — verify reports ZERO ERRORS YES",
+    "Mention verify or pass in agent text without running checkers"
+  ]
+}

@@ -1,0 +1,147 @@
+{
+  "$schema": "./restriction-schema.json",
+  "version": "1.0.0",
+  "description": "Allowed use categories for GLM-5.1 — aligned with Z.AI Terms and API documentation",
+  "source": "https://docs.z.ai/legal-agreement/terms-of-use.md",
+  "categories": [
+    {
+      "id": "coding-assistance",
+      "label": "Software development assistance",
+      "description": "Code generation, debugging, refactoring, code review, and explanation",
+      "examples": [
+        "Write a Python function to parse JSON safely",
+        "Debug this TypeScript React component",
+        "Refactor this class to use dependency injection",
+        "Explain how async/await works in JavaScript"
+      ]
+    },
+    {
+      "id": "technical-documentation",
+      "label": "Technical documentation",
+      "description": "API docs, README files, architecture notes, and developer guides",
+      "examples": [
+        "Draft API documentation for a REST endpoint",
+        "Write a README for an open-source library",
+        "Summarize this system architecture diagram"
+      ]
+    },
+    {
+      "id": "educational-programming",
+      "label": "Educational programming content",
+      "description": "Teaching programming concepts, algorithms, and computer science fundamentals",
+      "examples": [
+        "Explain binary search with a simple example",
+        "What is the difference between a stack and a queue?",
+        "Walk through how HTTP requests work"
+      ]
+    },
+    {
+      "id": "data-analysis-code",
+      "label": "Data analysis scripts",
+      "description": "Non-decision-making data processing and visualization code",
+      "examples": [
+        "Write a pandas script to clean CSV columns",
+        "Create a matplotlib chart from this dataset",
+        "Parse log files and count error frequencies"
+      ]
+    },
+    {
+      "id": "devops-automation",
+      "label": "DevOps and automation",
+      "description": "CI/CD, infrastructure scripts, and deployment configuration",
+      "examples": [
+        "Create a GitHub Actions workflow for Python tests",
+        "Write a Dockerfile for a Node.js application",
+        "Generate a Terraform module for an S3 bucket"
+      ]
+    },
+    {
+      "id": "coding-agent",
+      "label": "Coding agent (Cursor parity)",
+      "description": "Autonomous agent with file edit, terminal, codebase search, git, and web tools",
+      "examples": [
+        "Fix TypeScript errors across the project",
+        "Run tests and apply patches until green",
+        "Search the web for API documentation",
+        "Git status, diff, and commit message suggestions"
+      ],
+      "config": "config/coding-agent.json"
+    },
+    {
+      "id": "gaming-pc-builds",
+      "label": "Gaming PC build planning",
+      "description": "Hardware recommendations, part lists, compatibility, FPS estimates, and upgrade paths for gaming PCs",
+      "examples": [
+        "Design a $2000 1440p ultra gaming PC with full parts list",
+        "Best GPU for 4K 120Hz gaming in 2026",
+        "Compare RTX vs AMD for competitive FPS at 1080p 360Hz",
+        "Upgrade path from RTX 3070 — keep CPU or rebuild?",
+        "ITX LAN party build under $1500 with thermals analysis"
+      ]
+    },
+    {
+      "id": "video-game-creation",
+      "label": "Video game creation from scratch",
+      "description": "Full game development: characters, gameplay, multiplayer, 3D models, textures, terrain, roads, maps",
+      "examples": [
+        "Create an open-world RPG with terrain and quests",
+        "Build a multiplayer FPS arena with WebSocket sync",
+        "Generate 3D racing track with roads on procedural terrain"
+      ],
+      "config": "config/game-studio.json"
+    },
+    {
+      "id": "local-unlimited-usage",
+      "label": "Local unlimited usage",
+      "description": "All features on this PC with no API keys, cloud quotas, or rate limits",
+      "examples": [
+        "Run unlimited PC build consultations locally",
+        "Chat and PC builder with no daily message cap",
+        "Ollama inference on localhost:11434"
+      ],
+      "config": "config/local.json"
+    },
+    {
+      "id": "openai-compatible-api",
+      "label": "OpenAI-compatible local API",
+      "description": "Chat completions and streaming via official OpenAI SDK against local Ollama",
+      "examples": [
+        "Stream a chat completion locally",
+        "PC builder via /api/pc-builder/build/stream",
+        "Unlimited local inference on this PC"
+      ],
+      "sdk": {
+        "package": "openai",
+        "min_version": "1.0.0",
+        "base_url": "http://127.0.0.1:11434/v1",
+        "model": "llama3.1:8b"
+      }
+    },
+    {
+      "id": "coding-plan-supported-tools",
+      "label": "GLM Coding Plan in supported tools",
+      "description": "Agent-assisted coding only within officially supported IDEs and agents",
+      "examples": [
+        "Use glm-5.1 in Cline with coding/paas/v4 endpoint",
+        "Agent workflow in Claude Code IDE plugin",
+        "Terminal coding agent in OpenCode or Goose"
+      ],
+      "constraints": [
+        "Must use https://api.z.ai/api/coding/paas/v4 for Coding Plan quota",
+        "Only within tools listed at https://docs.z.ai/devpack/tool/others.md"
+      ]
+    },
+    {
+      "id": "self-hosted-mit",
+      "label": "Self-hosted deployment (MIT license)",
+      "description": "Download weights from HuggingFace and deploy via vLLM/SGLang on your infrastructure",
+      "examples": [
+        "Deploy glm-5.1 with vLLM on 8x H200",
+        "Fine-tune open weights for internal use",
+        "Commercial use of MIT-licensed weights"
+      ],
+      "license": "MIT",
+      "weights": "https://huggingface.co/zai-org/GLM-5.1"
+    }
+  ]
+}

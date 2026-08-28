@@ -1,0 +1,51 @@
+{
+  "version": "1.0.0",
+  "description": "Local commands and scripts — always allowed on this PC without internet approval",
+  "enabled": true,
+  "run_terminal": {
+    "enabled": true,
+    "default_timeout_seconds": 300,
+    "max_timeout_seconds": 900,
+    "max_output_bytes": 131072,
+    "shell": true,
+    "description": "Run any shell command in the workspace: npm test, pytest, git, build, etc."
+  },
+  "run_script": {
+    "enabled": true,
+    "default_timeout_seconds": 600,
+    "description": "Execute script files directly with the correct interpreter"
+  },
+  "allowed_script_extensions": [
+    ".py",
+    ".sh",
+    ".bash",
+    ".zsh",
+    ".js",
+    ".mjs",
+    ".cjs",
+    ".ts",
+    ".ps1",
+    ".bat",
+    ".cmd"
+  ],
+  "interpreters": {
+    ".py": ["python3", "{path}"],
+    ".sh": ["bash", "{path}"],
+    ".bash": ["bash", "{path}"],
+    ".zsh": ["zsh", "{path}"],
+    ".js": ["node", "{path}"],
+    ".mjs": ["node", "{path}"],
+    ".cjs": ["node", "{path}"],
+    ".ts": ["npx", "tsx", "{path}"],
+    ".ps1": ["pwsh", "-File", "{path}"],
+    ".bat": ["cmd", "/c", "{path}"],
+    ".cmd": ["cmd", "/c", "{path}"]
+  },
+  "examples": [
+    "run_terminal: npm test",
+    "run_terminal: python3 -m pytest backend/ -x",
+    "run_script: start.sh",
+    "run_script: backend/main.py",
+    "run_terminal: ./start.sh"
+  ]
+}

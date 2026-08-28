@@ -1,0 +1,102 @@
+{
+  "version": "1.0.0",
+  "description": "Gaming PC build presets for the local GLM-5.1 UI — high-end configurations by budget and target",
+  "resolutions": [
+    { "id": "1080p", "label": "1080p", "refresh": "60–240 Hz" },
+    { "id": "1440p", "label": "1440p", "label_long": "1440p (QHD)", "refresh": "144–360 Hz" },
+    { "id": "4k", "label": "4K", "label_long": "4K (UHD)", "refresh": "60–144 Hz" },
+    { "id": "ultrawide", "label": "Ultrawide", "refresh": "144–240 Hz" }
+  ],
+  "use_cases": [
+    { "id": "competitive-fps", "label": "Competitive FPS", "icon": "🎯" },
+    { "id": "aaa-gaming", "label": "AAA / Story Games", "icon": "🎮" },
+    { "id": "streaming", "label": "Gaming + Streaming", "icon": "📺" },
+    { "id": "content-creation", "label": "Gaming + Content Creation", "icon": "🎬" },
+    { "id": "sim-racing", "label": "Sim Racing / Flight", "icon": "🏎️" },
+    { "id": "vr", "label": "VR Gaming", "icon": "🥽" }
+  ],
+  "builds": [
+    {
+      "id": "budget-1080p",
+      "name": "Solid 1080p Gamer",
+      "budget_usd": 800,
+      "tier": "budget",
+      "target": "1080p high settings, 60+ FPS in most titles",
+      "highlights": ["Best value GPU tier", "16 GB DDR5", "1 TB NVMe"],
+      "prompt": "Design an $800 USD gaming PC build for 1080p high settings. Include exact CPU, GPU, motherboard, RAM (speed/capacity), PSU (wattage + efficiency), case, and cooler. Explain why each part was chosen, list 2 alternative GPUs, note bottleneck risks, and give expected FPS in Fortnite, Cyberpunk 2077, and Baldur's Gate 3."
+    },
+    {
+      "id": "mid-1440p",
+      "name": "1440p High Refresh",
+      "budget_usd": 1400,
+      "tier": "mid",
+      "target": "1440p ultra, 100+ FPS competitive / 80+ FPS AAA",
+      "highlights": ["Strong mid-range GPU", "32 GB RAM", "Quality PSU headroom"],
+      "prompt": "Design a $1400 USD gaming PC optimized for 1440p ultra settings at high refresh rates. Target 144+ FPS in esports and 80+ FPS in modern AAA. Include full parts list with prices, compatibility checks, airflow advice, and upgrade path for GPU in 2 years."
+    },
+    {
+      "id": "high-1440p",
+      "name": "1440p Enthusiast",
+      "budget_usd": 2200,
+      "tier": "high",
+      "target": "1440p max settings, 144+ FPS everywhere",
+      "highlights": ["Upper-mid GPU", "PCIe 5.0 ready", "Premium cooling"],
+      "prompt": "Design a $2200 USD enthusiast 1440p gaming PC. Max settings, 144+ FPS in AAA titles. Include CPU/GPU pairing rationale, RAM tuning recommendations, case fan layout, and whether to prioritize AMD or Intel for this budget in 2026."
+    },
+    {
+      "id": "4k-ultra",
+      "name": "4K Ultra Gaming",
+      "budget_usd": 3200,
+      "tier": "enthusiast",
+      "target": "4K ultra, 60–120 FPS with DLSS/FSR where needed",
+      "highlights": ["Flagship GPU class", "32–64 GB RAM", "850W+ PSU"],
+      "prompt": "Design a $3200 USD 4K ultra gaming PC. Target 60–120 FPS at 4K in modern AAA with DLSS/FSR. Full parts list, thermal analysis, monitor pairing recommendations (4K 144Hz vs OLED), and power draw estimate."
+    },
+    {
+      "id": "ultimate-4k",
+      "name": "Ultimate 4K / 240Hz",
+      "budget_usd": 5000,
+      "tier": "ultimate",
+      "target": "Top-tier everything — 4K high refresh or ultrawide maxed",
+      "highlights": ["Best-in-class GPU", "High-end CPU", "Custom loop optional"],
+      "prompt": "Design a $5000 USD no-compromise gaming PC for 4K high refresh or ultrawide max settings. Use the best consumer parts available. Include flagship CPU/GPU, 64 GB RAM, premium motherboard, 1000W+ PSU, high-airflow case, and AIO or custom loop option. Compare vs prebuilt value."
+    },
+    {
+      "id": "stream-build",
+      "name": "Game + Stream",
+      "budget_usd": 2500,
+      "tier": "high",
+      "target": "Play + stream at 1440p without frame drops",
+      "highlights": ["Multi-threaded CPU", "NVENC/AMF encoding", "Dual storage"],
+      "prompt": "Design a $2500 USD gaming + streaming PC. Must game at 1440p ultra while streaming to Twitch at 1080p60 with minimal FPS loss. Recommend CPU with strong multi-core, GPU with good encoder, 32 GB RAM, separate OS/game drive setup, and OBS settings guidance."
+    },
+    {
+      "id": "vr-ready",
+      "name": "VR Ready",
+      "budget_usd": 2000,
+      "tier": "high",
+      "target": "Quest 3 / Vision Pro class VR at high settings",
+      "highlights": ["Low latency focus", "Strong single-core", "USB port planning"],
+      "prompt": "Design a $2000 USD VR gaming PC for Quest 3 / PCVR. Prioritize low latency, strong single-thread CPU, GPU for 90+ FPS per eye in Half-Life Alyx and Beat Saber mods. Include USB header planning, wireless vs wired Link notes, and recommended headsets."
+    },
+    {
+      "id": "sff-portable",
+      "name": "Small Form Factor LAN",
+      "budget_usd": 1800,
+      "tier": "mid",
+      "target": "Portable LAN party build in ITX/SFF case",
+      "highlights": ["ITX motherboard", "Compact GPU", "Efficient cooling"],
+      "prompt": "Design an $1800 USD small form factor gaming PC in an ITX case for LAN parties. Maximize GPU size within SFF constraints, address thermals and noise, and list exact case + cooler + GPU length compatibility."
+    }
+  ],
+  "quick_prompts": [
+    "Compare RTX 5070 Ti vs RX 8900 XT for 1440p gaming in 2026",
+    "What PSU wattage do I need for a flagship GPU + overclocked CPU?",
+    "Best CPU for pure gaming — Intel vs AMD at $400",
+    "How much RAM do I need for gaming in 2026?",
+    "NVMe vs SATA SSD — does it matter for game load times?",
+    "Air cooling vs AIO vs custom loop for a hot GPU build",
+    "Upgrade my old build: keep case/PSU or start fresh?",
+    "Best monitor pairing for a 1440p 240Hz build under $400"
+  ]
+}

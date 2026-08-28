@@ -1,0 +1,89 @@
+{
+  "version": "1.0.0",
+  "description": "Full video game creation from scratch — characters, gameplay, multiplayer, 3D, textures, terrain, roads, maps",
+  "output_directory": "games",
+  "engines": {
+    "threejs": {
+      "label": "Three.js 3D",
+      "cdn": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js",
+      "playable": "index.html"
+    },
+    "canvas2d": {
+      "label": "HTML5 Canvas 2D",
+      "playable": "index.html"
+    }
+  },
+  "capabilities": {
+    "characters": {
+      "enabled": true,
+      "description": "Player, NPC, enemy definitions with stats, appearance, animations stub",
+      "fields": ["name", "role", "health", "speed", "mesh", "color", "abilities"]
+    },
+    "gameplay": {
+      "enabled": true,
+      "description": "Features: inventory, quests, combat, vehicles, weapons, scoring",
+      "builtin_features": [
+        "inventory", "quests", "combat", "weapons", "health", "respawn",
+        "vehicles", "lap-counter", "checkpoints", "build-mode", "place-blocks",
+        "day-night", "save-system", "scoreboard", "npcs", "ai-npcs"
+      ]
+    },
+    "multiplayer": {
+      "enabled": true,
+      "description": "WebSocket server + client sync (positions, actions, chat)",
+      "default_port": 8765,
+      "max_players": 32
+    },
+    "3d-models": {
+      "enabled": true,
+      "description": "Procedural meshes (box, sphere, capsule, cylinder, custom glTF stub)",
+      "shapes": ["box", "sphere", "capsule", "cylinder", "plane", "custom"]
+    },
+    "texturing": {
+      "enabled": true,
+      "description": "Procedural canvas textures (grass, dirt, road, stone, water, custom)",
+      "types": ["grass", "dirt", "road", "stone", "sand", "water", "brick", "custom"]
+    },
+    "images": {
+      "enabled": true,
+      "description": "UI sprites and skybox colors; cloud GLM-Image when internet approved",
+      "local": "procedural and SVG placeholders",
+      "cloud": "glm-image via Z.AI"
+    },
+    "foundation": {
+      "enabled": true,
+      "description": "Project scaffold: manifest, engine loop, input, camera, lighting, audio stub"
+    },
+    "terrain": {
+      "enabled": true,
+      "description": "Heightmap terrain with biomes and procedural generation",
+      "max_size": 512
+    },
+    "roads": {
+      "enabled": true,
+      "description": "Road splines and grid networks on terrain",
+      "max_segments": 256
+    },
+    "maps": {
+      "enabled": true,
+      "description": "World maps with spawn points, zones, POIs, minimap data"
+    }
+  },
+  "agent_tools": [
+    "game_create_project",
+    "game_add_character",
+    "game_add_feature",
+    "game_generate_terrain",
+    "game_generate_map",
+    "game_add_roads",
+    "game_setup_multiplayer",
+    "game_add_asset"
+  ],
+  "endpoints": {
+    "config": "/api/game-studio/config",
+    "presets": "/api/game-studio/presets",
+    "create": "/api/game-studio/create",
+    "projects": "/api/game-studio/projects",
+    "design_stream": "/api/game-studio/design/stream"
+  }
+}
