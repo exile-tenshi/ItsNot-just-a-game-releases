@@ -55,9 +55,10 @@
     },
     "terminal": {
       "enabled": true,
-      "max_output_bytes": 65536,
-      "timeout_seconds": 120,
-      "description": "Run shell commands in workspace — like Cursor terminal"
+      "max_output_bytes": 131072,
+      "timeout_seconds": 300,
+      "scripts_enabled": true,
+      "description": "Run shell commands and script files (.py, .sh, .js, .ts) in workspace"
     },
     "file_operations": {
       "enabled": true,
@@ -122,6 +123,7 @@
     "search_codebase",
     "edit_file",
     "run_terminal",
+    "run_script",
     "web_search",
     "fetch_url",
     "git_status",

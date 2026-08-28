@@ -4,12 +4,11 @@ from __future__ import annotations
 
 import json
 import subprocess
-from pathlib import Path
 from typing import Any, Callable
 
-from config import settings
 from code_checker import format_verify_report, verify_code
 from external_access import ExternalAccessDenied, gate
+from scripts_commands import run_script_file, run_terminal_command
 from web_search import fetch_url, web_search
 from workspace import (
     edit_file,
@@ -19,17 +18,6 @@ from workspace import (
     search_codebase,
     write_file,
 )
-
-BLOCKED_COMMANDS = [
-    "rm -rf /",
-    "mkfs",
-    ":(){ :|:& };:",
-    "dd if=/dev/zero",
-    "shutdown",
-    "reboot",
-    "halt",
-]
-
 
 def get_tool_schemas(*, internet_enabled: bool | None = None) -> list[dict[str, Any]]:
     schemas = _all_tool_schemas()
@@ -119,14 +107,38 @@ def _all_tool_schemas() -> list[dict[str, Any]]:
             "type": "function",
             "function": {
                 "name": "run_terminal",
-                "description": "Run a shell command in the workspace (like Cursor terminal)",
+                "description": "Run a shell command in the workspace — npm test, pytest, python -m, git, build pipelines, ./start.sh, etc.",
                 "parameters": {
                     "type": "object",
                     "properties": {
-                        "command": {"type": "string"},
+                        "command": {"type": "string", "description": "Shell command to run"},
                         "cwd": {"type": "string", "description": "Relative working directory", "default": "."},
+                        "timeout_seconds": {
+                            "type": "integer",
+                            "description": "Max seconds before timeout (default 300, max 900)",
+                        },
                     },
                     "required": ["command"],
+                },
+            },
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "run_script",
+                "description": "Execute a script file (.py, .sh, .js, .ts, etc.) with the correct interpreter and optional args",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "path": {"type": "string", "description": "Relative path to script in workspace"},
+                        "args": {"type": "string", "description": "Optional arguments passed to the script", "default": ""},
+                        "cwd": {"type": "string", "description": "Relative working directory", "default": "."},
+                        "timeout_seconds": {
+                            "type": "integer",
+                            "description": "Max seconds before timeout (default 600)",
+                        },
+                    },
+                    "required": ["path"],
                 },
             },
         },
@@ -217,36 +229,17 @@ def _all_tool_schemas() -> list[dict[str, Any]]:
     ]
 
 
-def run_terminal(command: str, cwd: str = ".") -> dict[str, Any]:
-    for blocked in BLOCKED_COMMANDS:
-        if blocked in command:
-            return {"error": f"Blocked dangerous command pattern: {blocked}"}
+def run_terminal(command: str, cwd: str = ".", timeout_seconds: int | None = None) -> dict[str, Any]:
+    return run_terminal_command(command, cwd=cwd, timeout_seconds=timeout_seconds)
 
-    root = get_workspace_root()
-    work = (root / cwd.strip().lstrip("/")).resolve()
-    if not str(work).startswith(str(root)):
-        return {"error": "cwd escapes workspace"}
 
-    try:
-        proc = subprocess.run(
-            command,
-            shell=True,
-            cwd=str(work),
-            capture_output=True,
-            text=True,
-            timeout=120,
-        )
-        stdout = proc.stdout[-65536:] if len(proc.stdout) > 65536 else proc.stdout
-        stderr = proc.stderr[-65536:] if len(proc.stderr) > 65536 else proc.stderr
-        return {
-            "command": command,
-            "cwd": cwd,
-            "exit_code": proc.returncode,
-            "stdout": stdout,
-            "stderr": stderr,
-        }
-    except subprocess.TimeoutExpired:
-        return {"error": "Command timed out after 120s", "command": command}
+def run_script(
+    path: str,
+    args: str = "",
+    cwd: str = ".",
+    timeout_seconds: int | None = None,
+) -> dict[str, Any]:
+    return run_script_file(path, args=args, cwd=cwd, timeout_seconds=timeout_seconds)
 
 
 def _git_cmd(args: list[str]) -> str:
@@ -290,7 +283,12 @@ TOOL_HANDLERS: dict[str, Callable[..., Any]] = {
     "edit_file": lambda **kw: edit_file(kw["path"], kw["old_string"], kw["new_string"]),
     "list_directory": lambda **kw: list_tree(kw.get("path", ".")),
     "search_codebase": lambda **kw: search_codebase(kw["pattern"], kw.get("path", ".")),
-    "run_terminal": lambda **kw: run_terminal(kw["command"], kw.get("cwd", ".")),
+    "run_terminal": lambda **kw: run_terminal(
+        kw["command"], kw.get("cwd", "."), kw.get("timeout_seconds")
+    ),
+    "run_script": lambda **kw: run_script(
+        kw["path"], kw.get("args", ""), kw.get("cwd", "."), kw.get("timeout_seconds")
+    ),
     "web_search": lambda **kw: web_search(kw["query"]),
     "fetch_url": lambda **kw: fetch_url(kw["url"]),
     "git_status": lambda **kw: git_status(),

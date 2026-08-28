@@ -23,7 +23,7 @@ from openai_client import chat_completion, create_openai_client, iter_stream_chu
 from pc_builder import PC_BUILDER_SYSTEM_PROMPT, build_custom_prompt, load_presets
 from prompts import build_chat_system_prompt, load_training
 from restriction_guard import RestrictionGuard
-from tools import execute_tool, get_tool_schemas
+from scripts_commands import load_scripts_config, run_script_file, run_terminal_command
 from workspace import get_workspace_root, list_tree, read_file, set_workspace_root, write_file
 
 app = FastAPI(
@@ -140,6 +140,19 @@ class ToolRunRequest(BaseModel):
 class VerifyCodeRequest(BaseModel):
     paths: list[str] = Field(default_factory=list)
     languages: list[str] = Field(default_factory=list)
+
+
+class TerminalRunRequest(BaseModel):
+    command: str
+    cwd: str = "."
+    timeout_seconds: int | None = Field(default=None, ge=1, le=900)
+
+
+class ScriptRunRequest(BaseModel):
+    path: str
+    args: str = ""
+    cwd: str = "."
+    timeout_seconds: int | None = Field(default=None, ge=1, le=900)
 
 
 @app.get("/api/health")
@@ -299,6 +312,32 @@ def run_tool(body: ToolRunRequest) -> dict[str, str]:
     _apply_external_access(body.internet_enabled)
     result = execute_tool(body.name, body.arguments, internet_enabled=gate.internet_enabled)
     return {"name": body.name, "result": result}
+
+
+@app.get("/api/scripts-commands/config")
+def scripts_commands_config() -> dict[str, Any]:
+    return load_scripts_config()
+
+
+@app.post("/api/terminal/run")
+def terminal_run(body: TerminalRunRequest) -> dict[str, Any]:
+    try:
+        return run_terminal_command(body.command, cwd=body.cwd, timeout_seconds=body.timeout_seconds)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.post("/api/scripts/run")
+def script_run(body: ScriptRunRequest) -> dict[str, Any]:
+    try:
+        return run_script_file(
+            body.path,
+            args=body.args,
+            cwd=body.cwd,
+            timeout_seconds=body.timeout_seconds,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
 @app.get("/api/verify/config")

@@ -286,12 +286,13 @@ export function AgentPanel({ settings }: AgentPanelProps) {
             <div className="text-center py-12 max-w-lg mx-auto">
               <h2 className="text-xl font-semibold mb-2">Coding Agent</h2>
               <p className="text-sm text-glm-muted mb-4">
-                Like Cursor: edit files, run terminal, search codebase, verify code (Ruff/mypy/ESLint/tsc), browse the web, use git.
+                Like Cursor: edit files, run commands & scripts, verify code, search codebase, use git.
+                {settings.internetEnabled ? " Web tools enabled." : ""}
               </p>
               <div className="flex flex-wrap justify-center gap-2">
                 {[
-                  "Fix all TypeScript errors in this project",
-                  "Add tests for the restriction guard",
+                  "Run ./start.sh and fix any errors",
+                  "Run pytest on the restriction guard tests",
                   "Search the web for FastAPI streaming SSE best practices",
                   "Show git status and summarize recent changes",
                 ].map((s) => (

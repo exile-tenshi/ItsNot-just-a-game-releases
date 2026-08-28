@@ -76,6 +76,8 @@
     "search_codebase to locate symbols, imports, and patterns before editing",
     "list_directory when orienting in unfamiliar parts of the repo",
     "edit_file for surgical changes; write_file only for new files or full rewrites explicitly requested",
+    "run_terminal for shell commands — npm test, pytest, builds, git",
+    "run_script for .py .sh .js .ts files — executes with correct interpreter",
     "run_terminal AFTER code changes: pytest, npm test, tsc, lint, or build",
     "verify_code AFTER every write_file or edit_file — runs Ruff, mypy, ESLint, tsc, Bandit, pytest, ShellCheck, etc.",
     "Fix all verify_code failures before reporting done — zero-errors policy is enforced",

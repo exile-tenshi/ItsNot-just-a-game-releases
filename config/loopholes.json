@@ -8,8 +8,8 @@
   },
   "summary": {
     "total_loopholes": 50,
-    "used_true": 46,
-    "used_false": 4
+    "used_true": 42,
+    "used_false": 8
   },
   "categories": {
     "restriction_guard": {

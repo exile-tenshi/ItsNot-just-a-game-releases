@@ -280,7 +280,7 @@ export function SettingsPanel({ settings, onChange }: SettingsPanelProps) {
         <ul className="text-xs text-glm-muted space-y-1 list-disc pl-4">
           <li>read_file / write_file / edit_file — file operations</li>
           <li>search_codebase — regex search across project</li>
-          <li>run_terminal — shell commands in workspace</li>
+          <li>run_terminal / run_script — shell commands and .py/.sh/.js/.ts scripts (local, always on)</li>
           <li>web_search / fetch_url — requires external connection approval in Settings</li>
           <li>git_status / git_diff / git_log — version control</li>
         </ul>

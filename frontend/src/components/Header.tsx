@@ -5,6 +5,7 @@ import { apiFetch } from "../types";
 const NAV: { id: TabId; label: string; icon: string }[] = [
   { id: "agent", label: "Agent", icon: "🤖" },
   { id: "chat", label: "Chat", icon: "💬" },
+  { id: "terminal", label: "Terminal", icon: "⌨️" },
   { id: "pcbuilder", label: "PC Builder", icon: "🖥️" },
   { id: "creation", label: "AI Create", icon: "✨" },
   { id: "restrictions", label: "Restrictions", icon: "📋" },
