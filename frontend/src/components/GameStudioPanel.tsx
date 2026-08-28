@@ -135,12 +135,14 @@ export function GameStudioPanel({ settings }: GameStudioPanelProps) {
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-6">
-      <h2 className="text-2xl font-semibold mb-2">Game Studio</h2>
-      <p className="text-sm text-glm-muted mb-6">
-        Create video games from scratch — characters, gameplay, multiplayer, 3D models, textures,
-        terrain, roads, maps. Playable Three.js games in your browser.
-      </p>
+    <div className="mx-auto max-w-6xl px-4 py-6">
+      <div className="mb-8">
+        <h2 className="text-3xl font-semibold text-gradient">Game Studio</h2>
+        <p className="mt-2 max-w-2xl text-sm leading-relaxed text-glm-muted">
+          Create video games from scratch — characters, gameplay, multiplayer, 3D models, textures,
+          terrain, roads, maps. Playable Three.js games in your browser.
+        </p>
+      </div>
 
       {presets?.capability_areas && (
         <div className="flex flex-wrap gap-2 mb-6">

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { AppSettings } from "../types";
 import { apiContext, apiFetch } from "../types";
+import { GlassCard, PrimaryButton } from "./ui/GlassCard";
 
 interface AgentPanelProps {
   settings: AppSettings;
@@ -219,23 +220,23 @@ export function AgentPanel({ settings }: AgentPanelProps) {
   };
 
   return (
-    <div className="flex h-[calc(100vh-4.5rem)]">
+    <div className="flex h-[calc(100vh-5.5rem)]">
       {/* File tree */}
-      <aside className="w-56 shrink-0 border-r border-glm-border bg-glm-surface overflow-y-auto hidden md:block">
-        <div className="p-3 border-b border-glm-border">
-          <p className="text-xs font-semibold text-glm-muted uppercase tracking-wide">Workspace</p>
-          <p className="text-[10px] text-glm-muted truncate mt-1" title={workspaceRoot}>
+      <aside className="glass-panel hidden w-60 shrink-0 overflow-y-auto border-r md:block">
+        <div className="border-b border-white/[0.06] p-4">
+          <p className="text-xs font-semibold uppercase tracking-widest text-glm-accent2">Workspace</p>
+          <p className="mt-1 truncate text-[10px] text-glm-muted" title={workspaceRoot}>
             {workspaceRoot}
           </p>
         </div>
-        <ul className="p-2 space-y-0.5 text-xs">
+        <ul className="space-y-0.5 p-2 text-xs">
           {tree.slice(0, 200).map((entry) => (
             <li key={entry.path}>
-              <div className="flex items-center gap-1 group">
+              <div className="group flex items-center gap-1">
                 <button
                   type="button"
                   onClick={() => openFile(entry.path)}
-                  className="flex-1 text-left px-2 py-1 rounded hover:bg-glm-card truncate text-glm-muted hover:text-white"
+                  className="flex-1 truncate rounded-lg px-2 py-1.5 text-left text-glm-muted transition-colors hover:bg-white/[0.06] hover:text-white"
                 >
                   {entry.type === "dir" ? "📁" : "📄"} {entry.name}
                 </button>
@@ -243,10 +244,10 @@ export function AgentPanel({ settings }: AgentPanelProps) {
                   <button
                     type="button"
                     onClick={() => toggleContextFile(entry.path)}
-                    className={`px-1.5 py-0.5 rounded text-[10px] ${
+                    className={`rounded-md px-1.5 py-0.5 text-[10px] transition-all ${
                       contextFiles.includes(entry.path)
-                        ? "bg-glm-accent text-white"
-                        : "opacity-0 group-hover:opacity-100 border border-glm-border"
+                        ? "bg-glm-accent text-white shadow-glm-glow"
+                        : "border border-glm-border opacity-0 group-hover:opacity-100"
                     }`}
                     title="Attach to context"
                   >
@@ -260,9 +261,11 @@ export function AgentPanel({ settings }: AgentPanelProps) {
       </aside>
 
       {/* Agent chat */}
-      <div className="flex-1 flex flex-col min-w-0">
-        <div className="px-4 py-2 border-b border-glm-border bg-glm-card/50 flex flex-wrap gap-2 items-center">
-          <span className="text-xs font-semibold text-glm-accent2">Agent Mode</span>
+      <div className="flex min-w-0 flex-1 flex-col">
+        <div className="flex flex-wrap items-center gap-2 border-b border-white/[0.06] bg-glm-card/40 px-4 py-3 backdrop-blur-md">
+          <span className="rounded-full bg-glm-accent2/15 px-2.5 py-0.5 text-xs font-semibold text-glm-accent2 ring-1 ring-glm-accent2/30">
+            Agent Mode
+          </span>
           <span className="text-[10px] text-glm-muted">
             {features.length} tools · {trainingRules} quality rules ·{" "}
             {settings.internetEnabled ? "internet approved" : "local only"}
@@ -271,7 +274,7 @@ export function AgentPanel({ settings }: AgentPanelProps) {
           {contextFiles.map((f) => (
             <span
               key={f}
-              className="text-[10px] px-2 py-0.5 rounded-full bg-glm-accent/20 text-glm-accent"
+              className="rounded-full bg-glm-accent/20 px-2 py-0.5 text-[10px] text-glm-accent ring-1 ring-glm-accent/30"
             >
               @{f.split("/").pop()}
               <button type="button" onClick={() => toggleContextFile(f)} className="ml-1">
@@ -281,50 +284,50 @@ export function AgentPanel({ settings }: AgentPanelProps) {
           ))}
         </div>
 
-        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+        <div className="flex-1 space-y-3 overflow-y-auto px-4 py-4">
           {items.length === 0 && (
-            <div className="text-center py-12 max-w-lg mx-auto">
-              <h2 className="text-xl font-semibold mb-2">Coding Agent</h2>
-              <p className="text-sm text-glm-muted mb-4">
-                Like Cursor: edit files, run commands & scripts, verify code, search codebase, use git.
-                {settings.internetEnabled ? " Web tools enabled." : ""}
-              </p>
-              <div className="flex flex-wrap justify-center gap-2">
-                {[
-                  "Run ./start.sh and fix any errors",
-                  "Run pytest on the restriction guard tests",
-                  "Search the web for FastAPI streaming SSE best practices",
-                  "Show git status and summarize recent changes",
-                ].map((s) => (
-                  <button
-                    key={s}
-                    type="button"
-                    onClick={() => setInput(s)}
-                    className="text-xs px-3 py-2 rounded-lg border border-glm-border hover:border-glm-accent text-glm-muted hover:text-white"
-                  >
-                    {s}
-                  </button>
-                ))}
-              </div>
+            <div className="mx-auto max-w-xl py-16 text-center">
+              <GlassCard glow className="p-8">
+                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-glm-accent/30 to-glm-accent2/30 text-3xl ring-1 ring-white/10">
+                  🤖
+                </div>
+                <h2 className="mb-2 text-2xl font-semibold text-gradient">Coding Agent</h2>
+                <p className="mb-6 text-sm leading-relaxed text-glm-muted">
+                  Like Cursor: edit files, run commands, verify code, search the codebase, and use git.
+                  {settings.internetEnabled ? " Web tools enabled." : " Fully local — no cloud required."}
+                </p>
+                <div className="flex flex-wrap justify-center gap-2">
+                  {[
+                    "Run ./start.sh and fix any errors",
+                    "Run pytest on the restriction guard tests",
+                    "Search the web for FastAPI streaming SSE best practices",
+                    "Show git status and summarize recent changes",
+                  ].map((s) => (
+                    <button key={s} type="button" onClick={() => setInput(s)} className="chip-suggestion">
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </GlassCard>
             </div>
           )}
 
           {items.map((item, i) => (
             <div
               key={i}
-              className={`rounded-xl px-4 py-3 text-sm ${
+              className={`rounded-2xl px-4 py-3 text-sm ${
                 item.role === "user"
-                  ? "bg-glm-accent/20 border border-glm-accent/30 ml-8"
+                  ? "ml-8 border border-glm-accent/30 bg-gradient-to-br from-glm-accent/25 to-sky-500/10 shadow-glm-glow"
                   : item.role === "tool"
-                    ? "bg-glm-bg border border-glm-border font-mono text-xs mr-4"
-                    : "bg-glm-card border border-glm-border mr-8"
+                    ? "mr-4 border border-glm-border/80 bg-glm-bg/80 font-mono text-xs backdrop-blur-sm"
+                    : "mr-8 border border-white/[0.08] bg-glm-card/70 backdrop-blur-sm"
               }`}
             >
               {item.role === "tool" && (
-                <p className="text-glm-accent2 font-semibold mb-1">
+                <p className="mb-1 font-semibold text-glm-accent2">
                   🔧 {item.toolName}
                   {item.toolArgs && (
-                    <span className="text-glm-muted font-normal ml-2 truncate">
+                    <span className="ml-2 truncate font-normal text-glm-muted">
                       {item.toolArgs.slice(0, 80)}
                     </span>
                   )}
@@ -335,12 +338,19 @@ export function AgentPanel({ settings }: AgentPanelProps) {
           ))}
 
           {loading && (
-            <div className="text-sm text-glm-muted animate-pulse px-4">Agent working…</div>
+            <div className="flex items-center gap-2 px-4 text-sm text-glm-muted">
+              <span className="inline-flex gap-1">
+                <span className="h-2 w-2 animate-bounce rounded-full bg-glm-accent" />
+                <span className="h-2 w-2 animate-bounce rounded-full bg-glm-accent [animation-delay:0.15s]" />
+                <span className="h-2 w-2 animate-bounce rounded-full bg-glm-accent [animation-delay:0.3s]" />
+              </span>
+              Agent working…
+            </div>
           )}
           <div ref={bottomRef} />
         </div>
 
-        <div className="border-t border-glm-border p-4 bg-glm-surface/90">
+        <div className="border-t border-white/[0.06] bg-glm-surface/80 p-4 backdrop-blur-xl">
           <div className="flex gap-2">
             <textarea
               value={input}
@@ -353,32 +363,25 @@ export function AgentPanel({ settings }: AgentPanelProps) {
               }}
               placeholder="Ask the agent to code, debug, search the web, run commands…"
               rows={2}
-              className="flex-1 resize-none rounded-xl bg-glm-card border border-glm-border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-glm-accent/50"
+              className="glass-input flex-1 resize-none"
             />
-            <button
-              type="button"
-              onClick={runAgent}
-              disabled={loading || !input.trim()}
-              className="px-5 py-3 rounded-xl bg-gradient-to-r from-glm-accent to-glm-accent2 font-semibold text-sm disabled:opacity-40 shrink-0"
-            >
+            <PrimaryButton onClick={runAgent} disabled={loading || !input.trim()} className="shrink-0">
               Run
-            </button>
+            </PrimaryButton>
           </div>
         </div>
       </div>
 
       {/* File preview */}
       {preview && (
-        <aside className="w-72 shrink-0 border-l border-glm-border bg-glm-surface overflow-y-auto hidden lg:block">
-          <div className="p-3 border-b border-glm-border flex justify-between items-center">
-            <p className="text-xs font-mono truncate">{preview.path}</p>
-            <button type="button" onClick={() => setPreview(null)} className="text-glm-muted text-xs">
+        <aside className="glass-panel hidden w-80 shrink-0 overflow-y-auto border-l lg:block">
+          <div className="flex items-center justify-between border-b border-white/[0.06] p-3">
+            <p className="truncate font-mono text-xs">{preview.path}</p>
+            <button type="button" onClick={() => setPreview(null)} className="text-xs text-glm-muted hover:text-white">
               ✕
             </button>
           </div>
-          <pre className="p-3 text-[10px] font-mono text-glm-muted whitespace-pre-wrap">
-            {preview.content}
-          </pre>
+          <pre className="whitespace-pre-wrap p-3 font-mono text-[10px] text-glm-muted">{preview.content}</pre>
         </aside>
       )}
     </div>

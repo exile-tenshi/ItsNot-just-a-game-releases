@@ -1,11 +1,26 @@
 """Application settings for GLM-5.1 UI backend."""
 
+from __future__ import annotations
+
 import json
+import os
+import sys
 from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-ROOT_DIR = Path(__file__).resolve().parent.parent
+
+def resolve_root_dir() -> Path:
+    """Project root — works in dev, PyInstaller bundle, and portable folder."""
+    env_root = os.environ.get("GLM_UI_ROOT")
+    if env_root:
+        return Path(env_root)
+    if getattr(sys, "frozen", False):
+        return Path(sys.executable).parent
+    return Path(__file__).resolve().parent.parent
+
+
+ROOT_DIR = resolve_root_dir()
 
 
 def _load_local_defaults() -> dict:
