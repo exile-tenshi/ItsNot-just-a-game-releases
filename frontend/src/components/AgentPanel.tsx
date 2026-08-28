@@ -219,7 +219,7 @@ export function AgentPanel({ settings }: AgentPanelProps) {
   };
 
   return (
-    <div className="flex h-[calc(100vh-4.5rem)]">
+    <div className="flex h-[calc(100dvh-3.5rem)] lg:h-[100dvh]">
       {/* File tree */}
       <aside className="w-56 shrink-0 border-r border-glm-border bg-glm-surface overflow-y-auto hidden md:block">
         <div className="p-3 border-b border-glm-border">
@@ -283,13 +283,18 @@ export function AgentPanel({ settings }: AgentPanelProps) {
 
         <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
           {items.length === 0 && (
-            <div className="text-center py-12 max-w-lg mx-auto">
-              <h2 className="text-xl font-semibold mb-2">Coding Agent</h2>
-              <p className="text-sm text-glm-muted mb-4">
-                Like Cursor: edit files, run commands & scripts, verify code, search codebase, use git.
-                {settings.internetEnabled ? " Web tools enabled." : ""}
+            <div className="text-center py-16 max-w-xl mx-auto animate-slide-up">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-glm-accent/20 to-glm-accent2/20 border border-glm-accent/30 mb-6 shadow-glow-sm">
+                <span className="text-3xl">⚡</span>
+              </div>
+              <h2 className="font-display text-2xl font-bold mb-2 bg-gradient-to-r from-white to-glm-muted bg-clip-text text-transparent">
+                Coding Agent
+              </h2>
+              <p className="text-sm text-glm-muted mb-8 leading-relaxed">
+                Cursor-like autonomy — edit files, run commands, verify code, search your codebase.
+                {settings.internetEnabled ? " Web tools are enabled." : " Running local-only until you approve internet in Settings."}
               </p>
-              <div className="flex flex-wrap justify-center gap-2">
+              <div className="grid sm:grid-cols-2 gap-2 text-left">
                 {[
                   "Run ./start.sh and fix any errors",
                   "Run pytest on the restriction guard tests",
@@ -300,7 +305,7 @@ export function AgentPanel({ settings }: AgentPanelProps) {
                     key={s}
                     type="button"
                     onClick={() => setInput(s)}
-                    className="text-xs px-3 py-2 rounded-lg border border-glm-border hover:border-glm-accent text-glm-muted hover:text-white"
+                    className="glass-card text-xs px-4 py-3 hover:border-glm-accent/30 text-glm-muted hover:text-white transition-all duration-200 text-left"
                   >
                     {s}
                   </button>
@@ -353,13 +358,13 @@ export function AgentPanel({ settings }: AgentPanelProps) {
               }}
               placeholder="Ask the agent to code, debug, search the web, run commands…"
               rows={2}
-              className="flex-1 resize-none rounded-xl bg-glm-card border border-glm-border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-glm-accent/50"
+              className="input-field flex-1 resize-none"
             />
             <button
               type="button"
               onClick={runAgent}
               disabled={loading || !input.trim()}
-              className="px-5 py-3 rounded-xl bg-gradient-to-r from-glm-accent to-glm-accent2 font-semibold text-sm disabled:opacity-40 shrink-0"
+              className="btn-primary shrink-0"
             >
               Run
             </button>

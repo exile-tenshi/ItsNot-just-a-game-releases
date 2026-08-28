@@ -1,11 +1,35 @@
 """Application settings for GLM-5.1 UI backend."""
 
 import json
+import os
+import sys
 from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-ROOT_DIR = Path(__file__).resolve().parent.parent
+
+def _resolve_bundle_dir() -> Path:
+    env = os.environ.get("GLM_BUNDLE_DIR")
+    if env:
+        return Path(env).resolve()
+    if getattr(sys, "frozen", False):
+        return Path(getattr(sys, "_MEIPASS", Path(sys.executable).parent)).resolve()
+    return Path(__file__).resolve().parent.parent
+
+
+def _resolve_app_dir() -> Path:
+    env = os.environ.get("GLM_APP_DIR")
+    if env:
+        return Path(env).resolve()
+    if getattr(sys, "frozen", False):
+        return Path(sys.executable).resolve().parent
+    return Path(__file__).resolve().parent.parent
+
+
+BUNDLE_DIR = _resolve_bundle_dir()
+APP_DIR = _resolve_app_dir()
+ROOT_DIR = BUNDLE_DIR
+IS_FROZEN = getattr(sys, "frozen", False)
 
 
 def _load_local_defaults() -> dict:
@@ -22,7 +46,7 @@ _INFERENCE = _LOCAL.get("inference", {})
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=str(ROOT_DIR / ".env"),
+        env_file=str(APP_DIR / ".env"),
         env_file_encoding="utf-8",
         extra="ignore",
     )
@@ -56,7 +80,7 @@ class Settings(BaseSettings):
     local_config_path: Path = ROOT_DIR / "config" / "local.json"
     pc_builder_config_path: Path = ROOT_DIR / "config" / "pc-builder-presets.json"
     coding_agent_config_path: Path = ROOT_DIR / "config" / "coding-agent.json"
-    workspace_root: str = str(ROOT_DIR)
+    workspace_root: str = str(APP_DIR)
     internet_enabled: bool = False
 
     @property
