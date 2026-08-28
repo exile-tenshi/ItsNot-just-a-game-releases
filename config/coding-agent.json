@@ -114,6 +114,11 @@
     "pc_builder": {
       "enabled": true,
       "description": "Gaming PC build advisor (local specialty)"
+    },
+    "game_studio": {
+      "enabled": true,
+      "description": "Video game creation from scratch — 3D, characters, terrain, multiplayer",
+      "config": "config/game-studio.json"
     }
   },
   "tools": [
@@ -129,7 +134,15 @@
     "git_status",
     "git_diff",
     "git_log",
-    "verify_code"
+    "verify_code",
+    "game_create_project",
+    "game_add_character",
+    "game_add_feature",
+    "game_generate_terrain",
+    "game_generate_map",
+    "game_add_roads",
+    "game_setup_multiplayer",
+    "game_add_asset"
   ],
   "system_prompt_template": "Layered system_policy: role, priorities, decision_making, universal_constraints, operating_policy, tool_policy, risk_policy, output_contract — aligned with Cursor Agent and Claude Code claude_code preset. See config/agent-training.json and AGENTS.md."
 }

@@ -7,6 +7,7 @@ import { TestSuitePanel } from "./components/TestSuitePanel";
 import { SettingsPanel } from "./components/SettingsPanel";
 import { PCBuilderPanel } from "./components/PCBuilderPanel";
 import { CreationPanel } from "./components/CreationPanel";
+import { GameStudioPanel } from "./components/GameStudioPanel";
 import { TerminalPanel } from "./components/TerminalPanel";
 import type { AppSettings, TabId } from "./types";
 import { DEFAULT_SETTINGS, syncExternalAccess } from "./types";
@@ -44,6 +45,7 @@ export default function App() {
         {activeTab === "agent" && <AgentPanel settings={settings} />}
         {activeTab === "chat" && <ChatPanel settings={settings} />}
         {activeTab === "terminal" && <TerminalPanel />}
+        {activeTab === "gamestudio" && <GameStudioPanel settings={settings} />}
         {activeTab === "pcbuilder" && <PCBuilderPanel settings={settings} />}
         {activeTab === "creation" && (
           <CreationPanel onNavigate={(tab) => setActiveTab(tab)} />

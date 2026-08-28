@@ -18,6 +18,19 @@ from codebase_index import build_project_brief
 from code_checker import format_verify_report, load_checker_config, verify_code
 from config import ROOT_DIR, settings
 from external_access import ExternalAccessDenied, gate
+from game_studio import (
+    GAME_STUDIO_SYSTEM_PROMPT,
+    build_design_prompt,
+    create_project,
+    generate_map,
+    generate_terrain,
+    add_roads,
+    list_projects,
+    load_game_config,
+    load_presets as load_game_presets,
+    regenerate_playable,
+    setup_multiplayer,
+)
 from loopholes import count_by_used, list_all_loopholes, load_loopholes
 from openai_client import chat_completion, create_openai_client, iter_stream_chunks, resolve_model
 from pc_builder import PC_BUILDER_SYSTEM_PROMPT, build_custom_prompt, load_presets
@@ -153,6 +166,28 @@ class ScriptRunRequest(BaseModel):
     args: str = ""
     cwd: str = "."
     timeout_seconds: int | None = Field(default=None, ge=1, le=900)
+
+
+class GameCreateRequest(BaseModel):
+    name: str
+    genre: str = "sandbox"
+    dimension: str = "3d"
+    features: list[str] = Field(default_factory=list)
+    with_terrain: bool = True
+    with_map: bool = True
+    with_roads: bool = True
+    with_multiplayer: bool = False
+
+
+class GameDesignRequest(BaseModel):
+    preset_id: str | None = None
+    extras: str = ""
+    stream: bool = True
+    temperature: float = 0.7
+    api_key: str | None = None
+    base_url: str | None = None
+    model: str | None = None
+    internet_enabled: bool | None = None
 
 
 @app.get("/api/health")
@@ -338,6 +373,80 @@ def script_run(body: ScriptRunRequest) -> dict[str, Any]:
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.get("/api/game-studio/config")
+def game_studio_config() -> dict[str, Any]:
+    return load_game_config()
+
+
+@app.get("/api/game-studio/presets")
+def game_studio_presets() -> dict[str, Any]:
+    return load_game_presets()
+
+
+@app.get("/api/game-studio/projects")
+def game_studio_projects() -> dict[str, Any]:
+    return {"projects": list_projects()}
+
+
+@app.post("/api/game-studio/create")
+def game_studio_create(body: GameCreateRequest) -> dict[str, Any]:
+    try:
+        result = create_project(body.name, body.genre, body.dimension, body.features or None)
+        slug = result["slug"]
+        if body.with_terrain:
+            generate_terrain(slug, 128, 128, 42, "hills")
+        if body.with_map:
+            generate_map(slug)
+        if body.with_roads:
+            add_roads(slug, grid_size=40)
+        if body.with_multiplayer:
+            setup_multiplayer(slug, enabled=True)
+        reg = regenerate_playable(slug)
+        return {"slug": slug, "created": True, **reg}
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.post("/api/game-studio/design/stream")
+def game_studio_design_stream(body: GameDesignRequest) -> StreamingResponse:
+    _apply_external_access(body.internet_enabled)
+    prompt = build_design_prompt(body.preset_id, body.extras)
+    messages = [
+        {"role": "system", "content": GAME_STUDIO_SYSTEM_PROMPT},
+        {"role": "user", "content": prompt},
+    ]
+    try:
+        gate.ensure_inference_allowed(body.base_url)
+        stream = chat_completion(
+            messages,
+            model=body.model,
+            temperature=body.temperature,
+            max_tokens=8192,
+            stream=True,
+            api_key=body.api_key,
+            base_url=body.base_url,
+        )
+    except ExternalAccessDenied as exc:
+        raise _external_access_error(exc) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+    def event_generator():
+        try:
+            yield f"data: {json.dumps({'prompt': prompt})}\n\n"
+            for chunk in iter_stream_chunks(stream):
+                yield f"data: {json.dumps({'content': chunk})}\n\n"
+            yield "data: [DONE]\n\n"
+        except Exception as exc:
+            yield f"data: {json.dumps({'error': str(exc)})}\n\n"
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
 
 
 @app.get("/api/verify/config")
@@ -761,6 +870,12 @@ def verify_connection(body: dict[str, Any]) -> dict[str, Any]:
         return {"valid": False, "error": exc.detail, "code": exc.reason}
     except Exception as exc:
         return {"valid": False, "error": str(exc)}
+
+
+# Playable games under /games/<project>/index.html
+_games_dir = get_workspace_root() / "games"
+_games_dir.mkdir(parents=True, exist_ok=True)
+app.mount("/games", StaticFiles(directory=str(_games_dir), html=True), name="games")
 
 
 # Serve built frontend from single process (local-only, no separate dev server needed)

@@ -137,6 +137,25 @@
       "tab": "pcbuilder"
     },
     {
+      "id": "game-studio",
+      "category": "specialty",
+      "name": "Video Game Studio",
+      "models": ["glm-5.1", "qwen2.5-coder:14b"],
+      "endpoint": "/api/game-studio/create",
+      "description": "Create full games: characters, gameplay, multiplayer, 3D, terrain, roads, maps",
+      "tab": "gamestudio",
+      "tools": [
+        "game_create_project",
+        "game_add_character",
+        "game_add_feature",
+        "game_generate_terrain",
+        "game_generate_map",
+        "game_add_roads",
+        "game_setup_multiplayer",
+        "game_add_asset"
+      ]
+    },
+    {
       "id": "streaming",
       "category": "infra",
       "name": "Streaming Output",

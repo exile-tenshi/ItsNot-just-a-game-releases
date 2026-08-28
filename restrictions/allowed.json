@@ -80,6 +80,17 @@
       ]
     },
     {
+      "id": "video-game-creation",
+      "label": "Video game creation from scratch",
+      "description": "Full game development: characters, gameplay, multiplayer, 3D models, textures, terrain, roads, maps",
+      "examples": [
+        "Create an open-world RPG with terrain and quests",
+        "Build a multiplayer FPS arena with WebSocket sync",
+        "Generate 3D racing track with roads on procedural terrain"
+      ],
+      "config": "config/game-studio.json"
+    },
+    {
       "id": "local-unlimited-usage",
       "label": "Local unlimited usage",
       "description": "All features on this PC with no API keys, cloud quotas, or rate limits",

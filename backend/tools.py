@@ -8,6 +8,18 @@ from typing import Any, Callable
 
 from code_checker import format_verify_report, verify_code
 from external_access import ExternalAccessDenied, gate
+from game_studio import (
+    add_asset,
+    add_character,
+    add_feature,
+    add_roads,
+    create_project,
+    generate_map,
+    generate_terrain,
+    list_projects,
+    regenerate_playable,
+    setup_multiplayer,
+)
 from scripts_commands import run_script_file, run_terminal_command
 from web_search import fetch_url, web_search
 from workspace import (
@@ -216,6 +228,146 @@ def _all_tool_schemas() -> list[dict[str, Any]]:
         {
             "type": "function",
             "function": {
+                "name": "game_create_project",
+                "description": "Create a new video game from scratch (Three.js 3D foundation, playable in browser)",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "name": {"type": "string"},
+                        "genre": {"type": "string", "default": "sandbox"},
+                        "dimension": {"type": "string", "enum": ["3d", "2d"], "default": "3d"},
+                        "features": {"type": "array", "items": {"type": "string"}},
+                    },
+                    "required": ["name"],
+                },
+            },
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "game_add_character",
+                "description": "Add a character (player, npc, enemy) with stats and appearance",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "project": {"type": "string"},
+                        "name": {"type": "string"},
+                        "role": {"type": "string", "default": "npc"},
+                        "health": {"type": "integer", "default": 50},
+                        "speed": {"type": "number", "default": 5},
+                        "color": {"type": "string", "default": "#ff6644"},
+                        "mesh": {"type": "string", "default": "box"},
+                        "abilities": {"type": "array", "items": {"type": "string"}},
+                    },
+                    "required": ["project", "name"],
+                },
+            },
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "game_add_feature",
+                "description": "Add gameplay feature: inventory, quests, combat, weapons, multiplayer, etc.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "project": {"type": "string"},
+                        "feature": {"type": "string"},
+                    },
+                    "required": ["project", "feature"],
+                },
+            },
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "game_generate_terrain",
+                "description": "Generate procedural 3D terrain heightmap with biomes",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "project": {"type": "string"},
+                        "width": {"type": "integer", "default": 128},
+                        "height": {"type": "integer", "default": 128},
+                        "seed": {"type": "integer", "default": 42},
+                        "style": {"type": "string", "default": "hills"},
+                    },
+                    "required": ["project"],
+                },
+            },
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "game_generate_map",
+                "description": "Create world map with spawn, zones, and points of interest",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "project": {"type": "string"},
+                        "name": {"type": "string", "default": "World"},
+                        "size": {"type": "integer", "default": 200},
+                    },
+                    "required": ["project"],
+                },
+            },
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "game_add_roads",
+                "description": "Add road network (splines or grid) on the map",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "project": {"type": "string"},
+                        "grid_size": {"type": "integer", "description": "Optional grid road spacing"},
+                    },
+                    "required": ["project"],
+                },
+            },
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "game_setup_multiplayer",
+                "description": "Enable WebSocket multiplayer server and client sync",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "project": {"type": "string"},
+                        "port": {"type": "integer", "default": 8765},
+                        "max_players": {"type": "integer", "default": 16},
+                    },
+                    "required": ["project"],
+                },
+            },
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "game_add_asset",
+                "description": "Add 3D model or procedural texture to the game",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "project": {"type": "string"},
+                        "asset_type": {"type": "string", "enum": ["texture", "model"]},
+                        "asset_id": {"type": "string"},
+                        "shape": {"type": "string", "default": "box"},
+                        "color": {"type": "string", "default": "#888888"},
+                        "scale": {"type": "array", "items": {"type": "number"}},
+                        "position": {"type": "array", "items": {"type": "number"}},
+                        "color1": {"type": "string"},
+                        "color2": {"type": "string"},
+                    },
+                    "required": ["project", "asset_type", "asset_id"],
+                },
+            },
+        },
+        {
+            "type": "function",
+            "function": {
                 "name": "git_log",
                 "description": "Recent git commits",
                 "parameters": {
@@ -295,6 +447,28 @@ TOOL_HANDLERS: dict[str, Callable[..., Any]] = {
     "git_diff": lambda **kw: git_diff(kw.get("path")),
     "git_log": lambda **kw: git_log(kw.get("count", 10)),
     "verify_code": lambda **kw: verify_code_tool(kw.get("paths"), kw.get("languages")),
+    "game_create_project": lambda **kw: create_project(
+        kw["name"], kw.get("genre", "sandbox"), kw.get("dimension", "3d"), kw.get("features")
+    ),
+    "game_add_character": lambda **kw: add_character(
+        kw["project"], kw["name"], kw.get("role", "npc"), kw.get("health", 50),
+        kw.get("speed", 5), kw.get("color", "#ff6644"), kw.get("mesh", "box"), kw.get("abilities"),
+    ),
+    "game_add_feature": lambda **kw: add_feature(kw["project"], kw["feature"], kw.get("config")),
+    "game_generate_terrain": lambda **kw: generate_terrain(
+        kw["project"], kw.get("width", 128), kw.get("height", 128), kw.get("seed", 42), kw.get("style", "hills"),
+    ),
+    "game_generate_map": lambda **kw: generate_map(kw["project"], kw.get("name", "World"), kw.get("size", 200)),
+    "game_add_roads": lambda **kw: add_roads(kw["project"], kw.get("roads"), kw.get("grid_size")),
+    "game_setup_multiplayer": lambda **kw: setup_multiplayer(
+        kw["project"], True, kw.get("port", 8765), kw.get("max_players", 16),
+    ),
+    "game_add_asset": lambda **kw: add_asset(
+        kw["project"], kw["asset_type"], kw["asset_id"],
+        shape=kw.get("shape", "box"), color=kw.get("color", "#888888"),
+        scale=kw.get("scale"), position=kw.get("position"),
+        color1=kw.get("color1", "#888888"), color2=kw.get("color2", "#666666"),
+    ),
 }
 
 
